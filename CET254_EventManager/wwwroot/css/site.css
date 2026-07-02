@@ -3973,3 +3973,14 @@ a {
         padding: 1.25rem;
     }
 }
+.admin-page-wrapper {
+    flex: 1 0 auto;
+    min-height: calc(100vh - 72px);
+    background: #f5f7fb;
+}
+
+    .admin-page-wrapper .admin-app-shell {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }

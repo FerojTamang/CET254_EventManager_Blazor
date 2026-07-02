@@ -1,23 +1,34 @@
 @inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
 
 <header class="site-header sticky-top">
     <nav class="navbar navbar-expand-lg navbar-light bg-white app-navbar">
-        <div class="container">
+        <div class="@(IsAdminPage ? "container-fluid px-4" : "container")">
             <a class="navbar-brand d-flex align-items-center gap-2" href="/">
                 <span class="brand-mark">CE</span>
                 <span>Community Events</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#blazorNavbar" aria-controls="blazorNavbar" aria-expanded="false" aria-label="Toggle navigation">
+
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#blazorNavbar"
+                    aria-controls="blazorNavbar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="blazorNavbar">
                 <ul class="navbar-nav flex-grow-1 gap-lg-1">
                     <li class="nav-item">
                         <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">Home</NavLink>
                     </li>
+
                     <li class="nav-item">
                         <NavLink class="nav-link" href="/events">Events</NavLink>
                     </li>
+
                     <AuthorizeView>
                         <Authorized>
                             <li class="nav-item">
@@ -25,6 +36,7 @@
                             </li>
                         </Authorized>
                     </AuthorizeView>
+
                     <AuthorizeView Roles="Admin">
                         <Authorized>
                             <li class="nav-item">
@@ -33,12 +45,16 @@
                         </Authorized>
                     </AuthorizeView>
                 </ul>
+
                 <ul class="navbar-nav gap-lg-1">
                     <AuthorizeView Context="authContext">
                         <Authorized>
                             <li class="nav-item">
-                                <a class="nav-link" href="/Identity/Account/Manage" title="Manage">Hello @authContext.User.Identity?.Name!</a>
+                                <a class="nav-link" href="/Identity/Account/Manage" title="Manage">
+                                    Hello @authContext.User.Identity?.Name!
+                                </a>
                             </li>
+
                             <li class="nav-item">
                                 <form class="form-inline" action="/Identity/Account/Logout?returnUrl=%2F" method="post">
                                     <AntiforgeryToken />
@@ -46,10 +62,12 @@
                                 </form>
                             </li>
                         </Authorized>
+
                         <NotAuthorized>
                             <li class="nav-item">
                                 <a class="nav-link" href="/Identity/Account/Register">Register</a>
                             </li>
+
                             <li class="nav-item">
                                 <a class="nav-link nav-pill" href="/Identity/Account/Login">Login</a>
                             </li>
@@ -61,49 +79,78 @@
     </nav>
 </header>
 
-<div class="container app-shell">
-    <main role="main" class="pb-4">
-        @Body
-    </main>
-</div>
-
-<footer class="site-footer app-footer">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-lg-4">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <span class="brand-mark brand-mark-footer">CE</span>
-                    <span class="fw-bold">Community Events</span>
-                </div>
-                <p class="footer-copy">A CET254 Advanced Programming project for browsing, managing, and registering for local community events.</p>
-            </div>
-            <div class="col-6 col-lg-2">
-                <h6>Quick Links</h6>
-                <a href="/">Home</a>
-                <a href="/events">Events</a>
-                <a href="/my-registrations">My Registrations</a>
-            </div>
-            <div class="col-6 col-lg-2">
-                <h6>For Organizers</h6>
-                <a href="/admin">Dashboard</a>
-                <a href="/admin/events">Manage Events</a>
-                <a href="/admin/registrations">Registrations</a>
-            </div>
-            <div class="col-6 col-lg-2">
-                <h6>Support</h6>
-                <span>Validation</span>
-                <span>Role access</span>
-                <span>Unit tested</span>
-            </div>
-            <div class="col-6 col-lg-2">
-                <h6>Newsletter</h6>
-                <p class="footer-copy mb-2">Updates placeholder for future email notifications.</p>
-                <div class="newsletter-placeholder">Coming soon</div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <span>&copy; 2026 Community Events</span>
-            <span>ASP.NET Core MVC | EF Core | Identity | xUnit</span>
-        </div>
+@if (IsAdminPage)
+{
+    <div class="admin-page-wrapper">
+        <main role="main">
+            @Body
+        </main>
     </div>
-</footer>
+}
+else
+{
+    <div class="container app-shell">
+        <main role="main" class="pb-4">
+            @Body
+        </main>
+    </div>
+
+    <footer class="site-footer app-footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="brand-mark brand-mark-footer">CE</span>
+                        <span class="fw-bold">Community Events</span>
+                    </div>
+                    <p class="footer-copy">
+                        A CET254 Advanced Programming project for browsing, managing, and registering for local community events.
+                    </p>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <h6>Quick Links</h6>
+                    <a href="/">Home</a>
+                    <a href="/events">Events</a>
+                    <a href="/my-registrations">My Registrations</a>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <h6>For Organizers</h6>
+                    <a href="/admin">Dashboard</a>
+                    <a href="/admin/events">Manage Events</a>
+                    <a href="/admin/registrations">Registrations</a>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <h6>Support</h6>
+                    <span>Validation</span>
+                    <span>Role access</span>
+                    <span>Unit tested</span>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <h6>Newsletter</h6>
+                    <p class="footer-copy mb-2">Updates placeholder for future email notifications.</p>
+                    <div class="newsletter-placeholder">Coming soon</div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span>&copy; 2026 Community Events</span>
+                <span>ASP.NET Core MVC | EF Core | Identity | xUnit</span>
+            </div>
+        </div>
+    </footer>
+}
+
+@code {
+    private bool IsAdminPage
+    {
+        get
+        {
+            var path = new Uri(NavigationManager.Uri).AbsolutePath;
+            return path.StartsWith("/admin", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+}
