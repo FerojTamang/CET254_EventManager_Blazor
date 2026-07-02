@@ -31,6 +31,9 @@
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "Events" ? "active" : string.Empty)" asp-area="" asp-controller="Events" asp-action="Index">Events</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/blazor/events">Blazor Events</a>
+                        </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">

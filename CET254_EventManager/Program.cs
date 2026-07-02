@@ -1,4 +1,5 @@
 using CET254_EventManager.Data;
+using CET254_EventManager.Components;
 using CET254_EventManager.Interfaces;
 using CET254_EventManager.Repositories;
 using CET254_EventManager.Services;
@@ -36,6 +37,8 @@ namespace CET254_EventManager
             builder.Services.AddScoped<IParticipantService, ParticipantService>();
             builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
             builder.Services.AddControllersWithViews();
+            builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
 
             var app = builder.Build();
 
@@ -58,11 +61,14 @@ namespace CET254_EventManager
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseAntiforgery();
 
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
             app.MapRazorPages();
+            app.MapRazorComponents<App>()
+                .AddInteractiveServerRenderMode();
 
             using (var scope = app.Services.CreateScope())
             {

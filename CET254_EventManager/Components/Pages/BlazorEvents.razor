@@ -1,0 +1,111 @@
+@page "/blazor/events"
+@inject IEventService EventService
+
+<PageTitle>Blazor Events</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+        <p class="text-uppercase text-muted fw-semibold mb-1">Blazor presentation layer</p>
+        <h1 class="mb-1">Upcoming Events</h1>
+        <p class="text-muted mb-0">Read-only event list using the existing service layer.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="/Events">MVC Events</a>
+</div>
+
+@if (_isLoading)
+{
+    <div class="alert alert-info" role="status">
+        Loading upcoming events...
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @_errorMessage
+    </div>
+}
+else if (_events.Count == 0)
+{
+    <div class="alert alert-secondary" role="status">
+        No upcoming events are currently available.
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var eventItem in _events)
+        {
+            <div class="col-md-6 col-xl-4">
+                <article class="card h-100 event-card">
+                    <div class="card-body">
+                        <h2 class="h5 card-title">@eventItem.Title</h2>
+                        <p class="text-muted mb-3">@eventItem.Description</p>
+                        <dl class="mb-0">
+                            <dt class="small text-uppercase text-muted">Date</dt>
+                            <dd>@eventItem.EventDate.ToString("dddd, dd MMM yyyy")</dd>
+
+                            <dt class="small text-uppercase text-muted">Time</dt>
+                            <dd>@FormatTime(eventItem.StartTime) - @FormatTime(eventItem.EndTime)</dd>
+
+                            <dt class="small text-uppercase text-muted">Venue</dt>
+                            <dd>@GetVenueSummary(eventItem)</dd>
+
+                            <dt class="small text-uppercase text-muted">Activities</dt>
+                            <dd>@GetActivitySummary(eventItem)</dd>
+                        </dl>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private readonly EventFilterViewModel _filter = new();
+    private List<Event> _events = new();
+    private bool _isLoading = true;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _events = await EventService.GetFilteredUpcomingEventsAsync(_filter);
+        }
+        catch
+        {
+            _errorMessage = "Unable to load upcoming events right now.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private static string FormatTime(TimeSpan time)
+    {
+        return DateTime.Today.Add(time).ToString("h:mm tt");
+    }
+
+    private static string GetVenueSummary(Event eventItem)
+    {
+        var venues = eventItem.EventVenues
+            .Where(eventVenue => eventVenue.Venue is not null)
+            .Select(eventVenue => eventVenue.Venue.Name)
+            .Distinct()
+            .ToList();
+
+        return venues.Count == 0 ? "Venue to be confirmed" : string.Join(", ", venues);
+    }
+
+    private static string GetActivitySummary(Event eventItem)
+    {
+        var activities = eventItem.EventActivities
+            .Where(eventActivity => eventActivity.Activity is not null)
+            .Select(eventActivity => eventActivity.Activity.Name)
+            .Distinct()
+            .ToList();
+
+        return activities.Count == 0 ? "Activities to be confirmed" : string.Join(", ", activities);
+    }
+}
