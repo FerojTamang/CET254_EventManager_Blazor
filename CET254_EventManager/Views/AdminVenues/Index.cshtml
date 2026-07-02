@@ -1,0 +1,37 @@
+@model IEnumerable<Venue>
+@{
+    ViewData["Title"] = "Manage Venues";
+}
+
+<section class="page-hero">
+    <div>
+        <p class="page-kicker">Admin management</p>
+        <h1 class="mb-2">Venues</h1>
+        <p class="page-subtitle mb-0">Maintain locations, addresses, and capacity for events.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</section>
+
+<div class="card admin-table-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Name</th><th>Address</th><th>Capacity</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var venue in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@venue.Name</td>
+                    <td>@venue.Address</td>
+                    <td><span class="badge badge-blue">@venue.Capacity seats</span></td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                        <a asp-action="Edit" asp-route-id="@venue.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@venue.Id" class="btn btn-sm btn-danger">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

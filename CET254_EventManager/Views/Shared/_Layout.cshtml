@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Community Events</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CET254_EventManager.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="site-header sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white app-navbar">
+            @{
+                var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+            }
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark">CE</span>
+                    <span>Community Events</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1 gap-lg-1">
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Home" ? "active" : string.Empty)" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Events" ? "active" : string.Empty)" asp-area="" asp-controller="Events" asp-action="Index">Events</a>
+                        </li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "MyRegistrations" ? "active" : string.Empty)" asp-area="" asp-controller="MyRegistrations" asp-action="Index">My Registrations</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle @(currentController?.StartsWith("Admin") == true ? "active" : string.Empty)" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Admin
+                                </a>
+                                <ul class="dropdown-menu border-0 shadow" aria-labelledby="adminMenu">
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Index">Dashboard</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminEvents" asp-action="Index">Events</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminVenues" asp-action="Index">Venues</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminActivities" asp-action="Index">Activities</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminParticipants" asp-action="Index">Participants</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminRegistrations" asp-action="Index">Registrations</a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                    <partial name="_LoginPartial" />
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container app-shell">
+        @if (TempData["Success"] is not null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] is not null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Warning"] is not null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                @TempData["Warning"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Info"] is not null)
+        {
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                @TempData["Info"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["SuccessMessage"] is not null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] is not null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["WarningMessage"] is not null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                @TempData["WarningMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["InfoMessage"] is not null)
+        {
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                @TempData["InfoMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        <main role="main" class="pb-4">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="site-footer app-footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="brand-mark brand-mark-footer">CE</span>
+                        <span class="fw-bold">Community Events</span>
+                    </div>
+                    <p class="footer-copy">A CET254 Advanced Programming project for browsing, managing, and registering for local community events.</p>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6>Quick Links</h6>
+                    <a asp-controller="Home" asp-action="Index">Home</a>
+                    <a asp-controller="Events" asp-action="Index">Events</a>
+                    <a asp-controller="MyRegistrations" asp-action="Index">My Registrations</a>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6>For Organizers</h6>
+                    <a asp-controller="Admin" asp-action="Index">Dashboard</a>
+                    <a asp-controller="AdminEvents" asp-action="Index">Manage Events</a>
+                    <a asp-controller="AdminRegistrations" asp-action="Index">Registrations</a>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6>Support</h6>
+                    <span>Validation</span>
+                    <span>Role access</span>
+                    <span>Unit tested</span>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6>Newsletter</h6>
+                    <p class="footer-copy mb-2">Updates placeholder for future email notifications.</p>
+                    <div class="newsletter-placeholder">Coming soon</div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; 2026 Community Events</span>
+                <span>ASP.NET Core MVC | EF Core | Identity | xUnit</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

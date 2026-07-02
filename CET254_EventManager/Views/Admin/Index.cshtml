@@ -1,0 +1,109 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<section class="page-hero">
+    <div>
+        <p class="page-kicker">Administration</p>
+        <h1 class="mb-2">Admin Dashboard</h1>
+        <p class="page-subtitle mb-0">Welcome back, Admin! Here's what's happening in your community.</p>
+    </div>
+    <a asp-controller="AdminEvents" asp-action="Create" class="btn btn-primary">Create Event</a>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="dashboard-stat-card"><span class="stat-icon">E</span><div><div class="text-muted small">Total Events</div><strong>@Model.TotalEvents</strong><small>Published programme</small></div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="dashboard-stat-card"><span class="stat-icon">P</span><div><div class="text-muted small">Total Participants</div><strong>@Model.TotalParticipants</strong><small>Registered users</small></div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="dashboard-stat-card"><span class="stat-icon">V</span><div><div class="text-muted small">Total Venues</div><strong>@Model.TotalVenues</strong><small>Available spaces</small></div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="dashboard-stat-card"><span class="stat-icon">A</span><div><div class="text-muted small">Total Activities</div><strong>@Model.TotalActivities</strong><small>Activity catalogue</small></div></div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-orange">P</span><div><div class="text-muted small">Pending Registrations</div><strong>@Model.PendingRegistrations</strong></div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-green">C</span><div><div class="text-muted small">Confirmed Registrations</div><strong>@Model.ConfirmedRegistrations</strong></div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-gray">X</span><div><div class="text-muted small">Cancelled Registrations</div><strong>@Model.CancelledRegistrations</strong></div></div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card admin-table-card h-100">
+            <div class="card-header p-4">
+                <h2 class="h5 mb-0">Recent Registrations</h2>
+            </div>
+            @if (Model.RecentRegistrations.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead><tr><th>Event</th><th>Participant</th><th>Date</th><th>Status</th></tr></thead>
+                        <tbody>
+                        @foreach (var registration in Model.RecentRegistrations)
+                        {
+                            var badgeClass = registration.Status switch
+                            {
+                                RegistrationStatus.Pending => "badge-orange",
+                                RegistrationStatus.Confirmed => "badge-green",
+                                RegistrationStatus.Cancelled => "badge-gray",
+                                _ => "badge-blue"
+                            };
+                            <tr>
+                                <td class="fw-semibold">@registration.EventTitle</td>
+                                <td>@registration.ParticipantName</td>
+                                <td>@registration.RegistrationDate.ToString("g")</td>
+                                <td><span class="status-badge @badgeClass">@registration.Status</span></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="card-body p-4"><p class="mb-0 text-muted">No registrations yet.</p></div>
+            }
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header p-4">
+                <h2 class="h5 mb-0">Quick Actions</h2>
+            </div>
+            <div class="card-body quick-actions p-4">
+                <a asp-controller="AdminEvents" asp-action="Create" class="quick-action-card">
+                    <span class="quick-action-icon">+</span>
+                    <span><strong>Create Event</strong><small>Add a new community event</small></span>
+                </a>
+                <a asp-controller="AdminEvents" asp-action="Index" class="quick-action-card">
+                    <span class="quick-action-icon">E</span>
+                    <span><strong>Manage Events</strong><small>Edit dates, details, and assignments</small></span>
+                </a>
+                <a asp-controller="AdminVenues" asp-action="Index" class="quick-action-card">
+                    <span class="quick-action-icon">V</span>
+                    <span><strong>Manage Venues</strong><small>Maintain locations and capacity</small></span>
+                </a>
+                <a asp-controller="AdminActivities" asp-action="Index" class="quick-action-card">
+                    <span class="quick-action-icon">A</span>
+                    <span><strong>Manage Activities</strong><small>Organize activity categories</small></span>
+                </a>
+                <a asp-controller="AdminRegistrations" asp-action="Index" class="quick-action-card">
+                    <span class="quick-action-icon">R</span>
+                    <span><strong>View Registrations</strong><small>Confirm or cancel participant requests</small></span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

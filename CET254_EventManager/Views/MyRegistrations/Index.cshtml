@@ -1,0 +1,118 @@
+@model List<RegistrationViewModel>
+@{
+    ViewData["Title"] = "My Registrations";
+    var totalRegistrations = Model.Count;
+    var confirmedRegistrations = Model.Count(registration => registration.Status == RegistrationStatus.Confirmed);
+    var upcomingRegistrations = Model.Count(registration => registration.Status != RegistrationStatus.Cancelled);
+}
+
+<section class="page-hero">
+    <div>
+        <p class="page-kicker">Participant area</p>
+        <h1 class="mb-2">My Registrations</h1>
+        <p class="page-subtitle mb-0">Track your event registrations, statuses, and upcoming participation.</p>
+    </div>
+    <a asp-controller="Events" asp-action="Index" class="btn btn-primary">Browse Events</a>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="dashboard-stat-card">
+            <span class="stat-icon">T</span>
+            <div><div class="text-muted small">Total Registrations</div><strong>@totalRegistrations</strong></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="dashboard-stat-card">
+            <span class="stat-icon">U</span>
+            <div><div class="text-muted small">Upcoming Events</div><strong>@upcomingRegistrations</strong></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="dashboard-stat-card">
+            <span class="stat-icon">C</span>
+            <div><div class="text-muted small">Confirmed</div><strong>@confirmedRegistrations</strong></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        @if (Model.Any())
+        {
+            <div class="d-grid gap-3">
+                @foreach (var registration in Model)
+                {
+                    var badgeClass = registration.Status switch
+                    {
+                        RegistrationStatus.Pending => "badge-orange",
+                        RegistrationStatus.Confirmed => "badge-green",
+                        RegistrationStatus.Cancelled => "badge-gray",
+                        _ => "badge-blue"
+                    };
+
+                    <article class="registration-card">
+                        <div class="registration-thumb">
+                            <span>@registration.RegistrationDate.ToString("MMM")</span>
+                            <strong>@registration.RegistrationDate.Day</strong>
+                        </div>
+                        <div class="registration-content">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                                <div>
+                                    <h2 class="h5 mb-1">@registration.EventTitle</h2>
+                                    <p class="text-muted small mb-0">Registered @registration.RegistrationDate.ToString("g")</p>
+                                </div>
+                                <span class="status-badge @badgeClass">@registration.Status</span>
+                            </div>
+                            <p class="text-muted mb-3">Open the event details page to review the latest date, time, venue, and activity information.</p>
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="activity-badge badge-blue">Community</span>
+                                <span class="activity-badge badge-purple">Event</span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a asp-controller="Events" asp-action="Details" asp-route-id="@registration.EventId" class="btn btn-sm btn-outline-primary">View Details</a>
+                                @if (registration.Status == RegistrationStatus.Pending || registration.Status == RegistrationStatus.Confirmed)
+                                {
+                                    <form asp-action="Cancel" method="post" class="d-inline">
+                                        <input type="hidden" name="registrationId" value="@registration.Id" />
+                                        <button type="submit" class="btn btn-sm btn-danger">Cancel Registration</button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <span class="feature-icon mb-3">+</span>
+                <h2 class="h4">No registrations yet</h2>
+                <p class="text-muted mb-3">Browse upcoming community events and register for one that interests you.</p>
+                <a asp-controller="Events" asp-action="Index" class="btn btn-primary">Browse upcoming events</a>
+            </div>
+        }
+    </div>
+    <div class="col-lg-4">
+        <aside class="status-guide p-4 mb-4">
+            <h2 class="h5 mb-3">Registration Status Guide</h2>
+            <div class="mb-3">
+                <span class="badge badge-green mb-1">Confirmed</span>
+                <p class="text-muted small mb-0">Your registration is confirmed.</p>
+            </div>
+            <div class="mb-3">
+                <span class="badge badge-orange mb-1">Pending</span>
+                <p class="text-muted small mb-0">Your registration is awaiting approval.</p>
+            </div>
+            <div>
+                <span class="badge badge-gray mb-1">Cancelled</span>
+                <p class="text-muted small mb-0">Your registration has been cancelled.</p>
+            </div>
+        </aside>
+        <aside class="status-guide p-4">
+            <h2 class="h5 mb-2">Need help?</h2>
+            <p class="text-muted mb-0">Contact an administrator if you need support with your registration.</p>
+        </aside>
+    </div>
+</div>

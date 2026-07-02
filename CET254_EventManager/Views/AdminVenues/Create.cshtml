@@ -1,0 +1,25 @@
+@model VenueViewModel
+@{
+    ViewData["Title"] = "Create Venue";
+}
+
+<section class="page-banner">
+    <p class="page-kicker">Admin management</p>
+    <h1 class="mb-2">Create Venue</h1>
+    <p class="page-subtitle mb-0">Add a venue for future community events.</p>
+</section>
+
+<form asp-action="Create" method="post" class="card form-card">
+    <div class="card-body p-4">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
+        <div class="mb-3"><label asp-for="Address" class="form-label"></label><input asp-for="Address" class="form-control" /><span asp-validation-for="Address" class="text-danger"></span></div>
+        <div class="mb-3"><label asp-for="Capacity" class="form-label"></label><input asp-for="Capacity" class="form-control" /><span asp-validation-for="Capacity" class="text-danger"></span></div>
+    </div>
+    <div class="card-footer p-4">
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-action="Index" class="btn btn-outline-primary">Back</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

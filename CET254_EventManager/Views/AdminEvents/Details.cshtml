@@ -1,0 +1,26 @@
+@model EventDetailsViewModel
+@{
+    ViewData["Title"] = "Event Details";
+}
+
+<div class="card overflow-hidden">
+    <div class="card-header d-flex justify-content-between align-items-center p-4">
+        <h1 class="h3 mb-0">@Model.Title</h1>
+        <span class="badge @(Model.IsRegistrationOpen ? "badge-green" : "badge-gray")">@(Model.IsRegistrationOpen ? "Open" : "Closed")</span>
+    </div>
+    <div class="card-body p-4">
+        <p>@Model.Description</p>
+        <dl class="row detail-list">
+            <dt class="col-sm-3">Date</dt><dd class="col-sm-9">@Model.EventDate.ToString("D")</dd>
+            <dt class="col-sm-3">Time</dt><dd class="col-sm-9">@Model.StartTime.ToString(@"hh\:mm") - @Model.EndTime.ToString(@"hh\:mm")</dd>
+            <dt class="col-sm-3">Venues</dt><dd class="col-sm-9">@foreach (var venue in Model.VenueNames) { <span class="badge badge-gray me-1">@venue</span> }</dd>
+            <dt class="col-sm-3">Activities</dt><dd class="col-sm-9">@foreach (var activity in Model.ActivityNames) { <span class="badge badge-purple me-1">@activity</span> }</dd>
+            <dt class="col-sm-3">Confirmed Registrations</dt><dd class="col-sm-9">@Model.ConfirmedRegistrationCount</dd>
+            <dt class="col-sm-3">Capacity Remaining</dt><dd class="col-sm-9">@(Model.CapacityRemaining?.ToString() ?? "Not limited")</dd>
+        </dl>
+    </div>
+    <div class="card-footer p-4">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+        <a asp-action="Index" class="btn btn-outline-primary">Back</a>
+    </div>
+</div>

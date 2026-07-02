@@ -1,0 +1,86 @@
+%% Community Event Management System - Entity Relationship Diagram
+erDiagram
+    %% Composite keys:
+    %% EVENT_VENUES primary key = EventId + VenueId
+    %% EVENT_ACTIVITIES primary key = EventId + ActivityId
+    %% REGISTRATIONS has unique index = EventId + ParticipantId
+
+    PARTICIPANTS ||--o{ REGISTRATIONS : registers
+    EVENTS ||--o{ REGISTRATIONS : has
+    EVENTS ||--o{ EVENT_VENUES : uses
+    VENUES ||--o{ EVENT_VENUES : assigned_to
+    EVENTS ||--o{ EVENT_ACTIVITIES : includes
+    ACTIVITIES ||--o{ EVENT_ACTIVITIES : belongs_to
+    ASPNET_USERS ||--o| PARTICIPANTS : profile
+
+    EVENTS {
+        int Id PK
+        string Title
+        string Description
+        date EventDate
+        time StartTime
+        time EndTime
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    PARTICIPANTS {
+        int Id PK
+        string FullName
+        string Email
+        string PhoneNumber
+        string ApplicationUserId FK
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    VENUES {
+        int Id PK
+        string Name
+        string Address
+        int Capacity
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    ACTIVITIES {
+        int Id PK
+        string Name
+        string ActivityType
+        string Description
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    REGISTRATIONS {
+        int Id PK
+        int EventId FK
+        int ParticipantId FK
+        datetime RegistrationDate
+        string Status
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    EVENT_VENUES {
+        int EventId PK,FK
+        int VenueId PK,FK
+    }
+
+    EVENT_ACTIVITIES {
+        int EventId PK,FK
+        int ActivityId PK,FK
+    }
+
+    ASPNET_USERS {
+        string Id PK
+        string UserName
+        string Email
+        bool EmailConfirmed
+    }
+
+    ASPNET_ROLES {
+        string Id PK
+        string Name
+        string NormalizedName
+    }

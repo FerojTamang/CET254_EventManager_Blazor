@@ -1,0 +1,29 @@
+@model Participant
+@{
+    ViewData["Title"] = "Participant Details";
+}
+
+<section class="page-banner">
+    <p class="page-kicker">Admin management</p>
+    <h1 class="mb-2">Participant Details</h1>
+    <p class="page-subtitle mb-0">View participant profile and registration summary.</p>
+</section>
+
+<div class="card">
+    <div class="card-header p-4">
+        <h1 class="h3 mb-0">@Model.FullName</h1>
+    </div>
+    <div class="card-body p-4">
+        <dl class="row detail-list">
+            <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@Model.Email</dd>
+            <dt class="col-sm-3">Phone</dt><dd class="col-sm-9">@Model.PhoneNumber</dd>
+            <dt class="col-sm-3">Identity User</dt><dd class="col-sm-9">@(Model.ApplicationUserId ?? "Not linked")</dd>
+            <dt class="col-sm-3">Registrations</dt><dd class="col-sm-9">@ViewBag.RegistrationCount</dd>
+        </dl>
+    </div>
+    <div class="card-footer p-4">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Delete</a>
+        <a asp-action="Index" class="btn btn-outline-primary">Back</a>
+    </div>
+</div>

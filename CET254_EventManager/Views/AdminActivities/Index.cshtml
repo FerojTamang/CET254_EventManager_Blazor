@@ -1,0 +1,37 @@
+@model IEnumerable<CET254_EventManager.Models.Activity>
+@{
+    ViewData["Title"] = "Manage Activities";
+}
+
+<section class="page-hero">
+    <div>
+        <p class="page-kicker">Admin management</p>
+        <h1 class="mb-2">Activities</h1>
+        <p class="page-subtitle mb-0">Manage activity labels and descriptions used by events.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</section>
+
+<div class="card admin-table-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Name</th><th>Type</th><th>Description</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var activity in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@activity.Name</td>
+                    <td><span class="badge badge-purple">@activity.ActivityType</span></td>
+                    <td>@activity.Description</td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                        <a asp-action="Edit" asp-route-id="@activity.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@activity.Id" class="btn btn-sm btn-danger">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

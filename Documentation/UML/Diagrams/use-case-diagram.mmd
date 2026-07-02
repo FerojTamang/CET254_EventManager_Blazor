@@ -1,0 +1,56 @@
+%% Community Event Management System - Use Case Diagram
+flowchart LR
+    Admin([Admin])
+    User([User / Participant])
+
+    subgraph AdminUseCases[Admin Use Cases]
+        ALogin((Login))
+        ManageEvents((Manage Events))
+        AssignVenues((Assign Venues to Events))
+        AssignActivities((Assign Activities to Events))
+        ManageVenues((Manage Venues))
+        ManageActivities((Manage Activities))
+        ViewParticipants((View Participants))
+        ViewRegistrations((View Registrations))
+        ConfirmRegistration((Confirm Registration))
+        CancelRegistration((Cancel Registration))
+    end
+
+    subgraph UserUseCases[User / Participant Use Cases]
+        RegisterAccount((Register Account))
+        ULogin((Login))
+        ViewUpcomingEvents((View Upcoming Events))
+        FilterByDate((Filter Events by Date))
+        FilterByVenue((Filter Events by Venue))
+        FilterByActivity((Filter Events by Activity))
+        ViewEventDetails((View Event Details))
+        RegisterForEvent((Register for Event))
+        ViewMyRegistrations((View My Registrations))
+        CancelMyRegistration((Cancel My Registration))
+    end
+
+    Admin --> ALogin
+    Admin --> ManageEvents
+    Admin --> ManageVenues
+    Admin --> ManageActivities
+    Admin --> ViewParticipants
+    Admin --> ViewRegistrations
+
+    ManageEvents -. includes .-> AssignVenues
+    ManageEvents -. includes .-> AssignActivities
+    ViewRegistrations -. extends .-> ConfirmRegistration
+    ViewRegistrations -. extends .-> CancelRegistration
+
+    User --> RegisterAccount
+    User --> ULogin
+    User --> ViewUpcomingEvents
+    User --> ViewEventDetails
+    User --> RegisterForEvent
+    User --> ViewMyRegistrations
+    User --> CancelMyRegistration
+
+    ViewUpcomingEvents -. includes .-> FilterByDate
+    ViewUpcomingEvents -. includes .-> FilterByVenue
+    ViewUpcomingEvents -. includes .-> FilterByActivity
+    RegisterForEvent -. requires .-> ULogin
+    RegisterForEvent -. includes .-> ViewEventDetails

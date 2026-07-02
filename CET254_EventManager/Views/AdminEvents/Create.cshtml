@@ -1,0 +1,65 @@
+@model EventCreateViewModel
+@{
+    ViewData["Title"] = "Create Event";
+    var venues = ViewBag.Venues as IEnumerable<Venue> ?? Enumerable.Empty<Venue>();
+    var activities = ViewBag.Activities as IEnumerable<CET254_EventManager.Models.Activity> ?? Enumerable.Empty<CET254_EventManager.Models.Activity>();
+}
+
+<section class="page-banner">
+    <p class="page-kicker">Admin management</p>
+    <h1 class="mb-2">Create Event</h1>
+    <p class="page-subtitle mb-0">Add a new community event with venues and activities.</p>
+</section>
+
+<form asp-action="Create" method="post" class="card form-card">
+    <div class="card-body p-4">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3"><label asp-for="EventDate" class="form-label"></label><input asp-for="EventDate" class="form-control" /><span asp-validation-for="EventDate" class="text-danger"></span></div>
+            <div class="col-md-4 mb-3"><label asp-for="StartTime" class="form-label"></label><input asp-for="StartTime" class="form-control" /><span asp-validation-for="StartTime" class="text-danger"></span></div>
+            <div class="col-md-4 mb-3"><label asp-for="EndTime" class="form-label"></label><input asp-for="EndTime" class="form-control" /><span asp-validation-for="EndTime" class="text-danger"></span></div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="choice-panel h-100">
+                <h2 class="h5">Venues</h2>
+                @foreach (var venue in venues)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="SelectedVenueIds" value="@venue.Id" id="venue_@venue.Id" />
+                        <label class="form-check-label" for="venue_@venue.Id">@venue.Name</label>
+                    </div>
+                }
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="choice-panel h-100">
+                <h2 class="h5">Activities</h2>
+                @foreach (var activity in activities)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="SelectedActivityIds" value="@activity.Id" id="activity_@activity.Id" />
+                        <label class="form-check-label" for="activity_@activity.Id">@activity.Name <span class="badge badge-purple">@activity.ActivityType</span></label>
+                    </div>
+                }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer p-4">
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-action="Index" class="btn btn-outline-primary">Back</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

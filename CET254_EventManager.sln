@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CET254_EventManager", "CET254_EventManager\CET254_EventManager.csproj", "{83B824B5-3F37-4EE1-9598-F0C53829C509}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CET254_EventManager.Tests", "CET254_EventManager.Tests\CET254_EventManager.Tests.csproj", "{E1207065-3839-450E-A9FC-3C3EBA9C5ED8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{83B824B5-3F37-4EE1-9598-F0C53829C509}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83B824B5-3F37-4EE1-9598-F0C53829C509}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83B824B5-3F37-4EE1-9598-F0C53829C509}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83B824B5-3F37-4EE1-9598-F0C53829C509}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1207065-3839-450E-A9FC-3C3EBA9C5ED8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1207065-3839-450E-A9FC-3C3EBA9C5ED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1207065-3839-450E-A9FC-3C3EBA9C5ED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1207065-3839-450E-A9FC-3C3EBA9C5ED8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

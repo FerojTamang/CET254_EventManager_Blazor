@@ -1,0 +1,201 @@
+%% Community Event Management System - Class Diagram
+classDiagram
+    class BaseEntity {
+        <<abstract>>
+        +int Id
+        +DateTime CreatedAt
+        +DateTime? UpdatedAt
+        +Validate() bool
+        #Touch() void
+    }
+
+    class Event {
+        +string Title
+        +string Description
+        +DateTime EventDate
+        +TimeSpan StartTime
+        +TimeSpan EndTime
+        +ICollection~Registration~ Registrations
+        +ICollection~EventVenue~ EventVenues
+        +ICollection~EventActivity~ EventActivities
+        +UpdateDetails() void
+        +Validate() bool
+    }
+
+    class Participant {
+        +string FullName
+        +string Email
+        +string PhoneNumber
+        +string? ApplicationUserId
+        +ICollection~Registration~ Registrations
+        +UpdateDetails() void
+        +Validate() bool
+    }
+
+    class Venue {
+        +string Name
+        +string Address
+        +int Capacity
+        +ICollection~EventVenue~ EventVenues
+        +UpdateDetails() void
+        +Validate() bool
+    }
+
+    class Activity {
+        +string Name
+        +ActivityType ActivityType
+        +string Description
+        +ICollection~EventActivity~ EventActivities
+        +UpdateDetails() void
+        +Validate() bool
+    }
+
+    class Registration {
+        +int EventId
+        +int ParticipantId
+        +DateTime RegistrationDate
+        +RegistrationStatus Status
+        +Confirm() void
+        +Cancel() void
+        +Validate() bool
+    }
+
+    class EventVenue {
+        +int EventId
+        +int VenueId
+    }
+
+    class EventActivity {
+        +int EventId
+        +int ActivityId
+    }
+
+    class RegistrationStatus {
+        <<enumeration>>
+        Pending
+        Confirmed
+        Cancelled
+    }
+
+    class ActivityType {
+        <<enumeration>>
+        Workshop
+        Talk
+        Game
+        Seminar
+        Training
+        Networking
+        Other
+    }
+
+    BaseEntity <|-- Event
+    BaseEntity <|-- Participant
+    BaseEntity <|-- Venue
+    BaseEntity <|-- Activity
+    BaseEntity <|-- Registration
+
+    Event "1" --> "*" Registration
+    Participant "1" --> "*" Registration
+    Event "1" --> "*" EventVenue
+    Venue "1" --> "*" EventVenue
+    Event "1" --> "*" EventActivity
+    Activity "1" --> "*" EventActivity
+
+    class IRepository~T~ {
+        <<interface>>
+        +GetByIdAsync(int id)
+        +GetAllAsync()
+        +Query() IQueryable~T~
+        +AddAsync(T entity)
+        +Update(T entity)
+        +Delete(T entity)
+        +SaveChangesAsync()
+    }
+
+    class Repository~T~ {
+        -ApplicationDbContext context
+        -DbSet~T~ dbSet
+    }
+
+    IRepository~T~ <|.. Repository~T~
+
+    class IEventService {
+        <<interface>>
+        +GetUpcomingEventsAsync()
+        +GetFilteredUpcomingEventsAsync(filter)
+        +CreateEventAsync(event, venues, activities)
+        +UpdateEventAsync(event, venues, activities)
+        +DeleteEventAsync(id)
+    }
+
+    class EventService {
+        -IRepository~Event~ eventRepository
+        -IEnumerable~IEventFilterStrategy~ filterStrategies
+    }
+
+    class IRegistrationService {
+        <<interface>>
+        +RegisterAsync(eventId, participantId)
+        +ConfirmRegistrationAsync(id)
+        +CancelRegistrationAsync(id, participantId)
+        +GetRegistrationSummaryAsync()
+    }
+
+    class RegistrationService {
+        -IRepository~Registration~ registrationRepository
+        -IRepository~Event~ eventRepository
+        -IRepository~Participant~ participantRepository
+    }
+
+    class IVenueService {
+        <<interface>>
+        +GetAllVenuesAsync()
+        +CreateVenueAsync(venue)
+        +DeleteVenueAsync(id)
+    }
+
+    class VenueService
+
+    class IActivityService {
+        <<interface>>
+        +GetAllActivitiesAsync()
+        +CreateActivityAsync(activity)
+        +DeleteActivityAsync(id)
+    }
+
+    class ActivityService
+
+    class IParticipantService {
+        <<interface>>
+        +GetAllParticipantsAsync()
+        +GetParticipantByApplicationUserIdAsync(id)
+        +CreateParticipantAsync(participant)
+    }
+
+    class ParticipantService
+
+    IEventService <|.. EventService
+    IRegistrationService <|.. RegistrationService
+    IVenueService <|.. VenueService
+    IActivityService <|.. ActivityService
+    IParticipantService <|.. ParticipantService
+
+    class IEventFilterStrategy {
+        <<interface>>
+        +Apply(events, filter) IQueryable~Event~
+    }
+
+    class DateFilterStrategy
+    class VenueFilterStrategy
+    class ActivityFilterStrategy
+    class SearchTermFilterStrategy
+
+    IEventFilterStrategy <|.. DateFilterStrategy
+    IEventFilterStrategy <|.. VenueFilterStrategy
+    IEventFilterStrategy <|.. ActivityFilterStrategy
+    IEventFilterStrategy <|.. SearchTermFilterStrategy
+
+    EventService --> IRepository~Event~
+    RegistrationService --> IRepository~Registration~
+    RegistrationService --> IRepository~Participant~
+    EventService --> IEventFilterStrategy

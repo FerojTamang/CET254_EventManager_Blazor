@@ -1,0 +1,74 @@
+%% Community Event Management System - Register for Event Sequence
+sequenceDiagram
+    actor User
+    participant Browser as Browser/View
+    participant Controller as EventsController
+    participant UserManager
+    participant ParticipantService
+    participant RegistrationService
+    participant EventRepository
+    participant ParticipantRepository
+    participant RegistrationRepository
+    participant Database
+
+    User->>Browser: Click Register
+    Browser->>Controller: POST Register(eventId)
+    Controller->>UserManager: Get current Identity user
+    UserManager-->>Controller: IdentityUser
+
+    Controller->>ParticipantService: GetParticipantByApplicationUserIdAsync(user.Id)
+    ParticipantService->>ParticipantRepository: Query participant profile
+    ParticipantRepository->>Database: SELECT Participant
+    Database-->>ParticipantRepository: Participant or null
+    ParticipantRepository-->>ParticipantService: Result
+    ParticipantService-->>Controller: Participant or null
+
+    alt Participant profile does not exist
+        Controller->>ParticipantService: CreateParticipantAsync(participant)
+        ParticipantService->>ParticipantRepository: AddAsync(participant)
+        ParticipantRepository->>Database: INSERT Participant
+        ParticipantService->>ParticipantRepository: SaveChangesAsync()
+        ParticipantRepository->>Database: COMMIT
+        ParticipantService-->>Controller: Created participant
+    end
+
+    Controller->>RegistrationService: RegisterAsync(eventId, participantId)
+    RegistrationService->>EventRepository: Check event exists
+    EventRepository->>Database: SELECT Event
+    Database-->>EventRepository: Event
+
+    RegistrationService->>ParticipantRepository: Check participant exists
+    ParticipantRepository->>Database: SELECT Participant exists
+    Database-->>ParticipantRepository: Exists result
+
+    RegistrationService->>RegistrationService: Check event is not in the past
+    RegistrationService->>RegistrationRepository: Check duplicate active registration
+    RegistrationRepository->>Database: SELECT Registration
+    Database-->>RegistrationRepository: Duplicate result
+
+    RegistrationService->>EventRepository: Load EventVenues and Venue capacity
+    EventRepository->>Database: SELECT Event + Venues
+    Database-->>EventRepository: Capacity data
+
+    RegistrationService->>RegistrationRepository: Count confirmed registrations
+    RegistrationRepository->>Database: SELECT COUNT
+    Database-->>RegistrationRepository: Confirmed count
+
+    RegistrationService->>RegistrationService: Create Registration(Pending)
+    RegistrationService->>RegistrationRepository: AddAsync(registration)
+    RegistrationRepository->>Database: INSERT Registration
+    RegistrationService->>RegistrationRepository: SaveChangesAsync()
+    RegistrationRepository->>Database: COMMIT
+    RegistrationService-->>Controller: Registration
+    Controller-->>Browser: Redirect with success message
+
+    alt Duplicate registration
+        RegistrationService-->>Controller: DuplicateRegistrationException
+        Controller-->>Browser: Redirect with error message
+    else Past event
+        RegistrationService-->>Controller: PastEventRegistrationException
+        Controller-->>Browser: Redirect with error message
+    else Venue full
+        RegistrationService-->>Controller: VenueCapacityExceededException
+        Controller-->>Browser: Redirect with error message
+    end
