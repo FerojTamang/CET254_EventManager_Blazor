@@ -39,18 +39,8 @@
                         }
                         @if (User.IsInRole("Admin"))
                         {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle @(currentController?.StartsWith("Admin") == true ? "active" : string.Empty)" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Admin
-                                </a>
-                                <ul class="dropdown-menu border-0 shadow" aria-labelledby="adminMenu">
-                                    <li><a class="dropdown-item" href="/admin">Dashboard</a></li>
-                                    <li><a class="dropdown-item" href="/admin/events">Events</a></li>
-                                    <li><a class="dropdown-item" href="/admin/venues">Venues</a></li>
-                                    <li><a class="dropdown-item" href="/admin/activities">Activities</a></li>
-                                    <li><a class="dropdown-item" href="/admin/participants">Participants</a></li>
-                                    <li><a class="dropdown-item" href="/admin/registrations">Registrations</a></li>
-                                </ul>
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController?.StartsWith("Admin") == true ? "active" : string.Empty)" href="/admin">Admin</a>
                             </li>
                         }
                     </ul>
@@ -140,9 +130,9 @@
                 </div>
                 <div class="col-6 col-lg-2">
                     <h6>For Organizers</h6>
-                    <a asp-controller="Admin" asp-action="Index">Dashboard</a>
-                    <a asp-controller="AdminEvents" asp-action="Index">Manage Events</a>
-                    <a asp-controller="AdminRegistrations" asp-action="Index">Registrations</a>
+                    <a href="/admin">Dashboard</a>
+                    <a href="/admin/events">Manage Events</a>
+                    <a href="/admin/registrations">Registrations</a>
                 </div>
                 <div class="col-6 col-lg-2">
                     <h6>Support</h6>

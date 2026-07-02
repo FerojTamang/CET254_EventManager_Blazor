@@ -1,5 +1,6 @@
 @page "/admin/participants"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using CET254_EventManager.Components.Shared
 @using Microsoft.AspNetCore.Components.Forms
 @inject IParticipantService ParticipantService
 @inject IRegistrationService RegistrationService
@@ -8,6 +9,9 @@
 
 <PageTitle>Blazor Admin Participants</PageTitle>
 
+<div class="admin-shell">
+    <AdminSidebar />
+    <main class="admin-shell-content">
 <section class="page-hero">
     <div>
         <p class="page-kicker">Admin management</p>
@@ -245,6 +249,9 @@ else
         </div>
     }
 }
+
+    </main>
+</div>
 
 @code {
     private enum PageMode

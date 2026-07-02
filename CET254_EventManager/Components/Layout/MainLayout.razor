@@ -27,18 +27,8 @@
                     </AuthorizeView>
                     <AuthorizeView Roles="Admin">
                         <Authorized>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Admin
-                                </a>
-                                <ul class="dropdown-menu border-0 shadow" aria-labelledby="adminMenu">
-                                    <li><a class="dropdown-item" href="/admin">Dashboard</a></li>
-                                    <li><a class="dropdown-item" href="/admin/events">Events</a></li>
-                                    <li><a class="dropdown-item" href="/admin/venues">Venues</a></li>
-                                    <li><a class="dropdown-item" href="/admin/activities">Activities</a></li>
-                                    <li><a class="dropdown-item" href="/admin/participants">Participants</a></li>
-                                    <li><a class="dropdown-item" href="/admin/registrations">Registrations</a></li>
-                                </ul>
+                            <li class="nav-item">
+                                <NavLink class="nav-link" href="/admin">Admin</NavLink>
                             </li>
                         </Authorized>
                     </AuthorizeView>

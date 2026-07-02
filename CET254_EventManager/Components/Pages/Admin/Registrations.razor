@@ -1,11 +1,15 @@
 @page "/admin/registrations"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using CET254_EventManager.Components.Shared
 @inject IRegistrationService RegistrationService
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 
 <PageTitle>Blazor Admin Registrations</PageTitle>
 
+<div class="admin-shell">
+    <AdminSidebar />
+    <main class="admin-shell-content">
 <section class="page-hero">
     <div>
         <p class="page-kicker">Admin management</p>
@@ -117,6 +121,9 @@ else
         </div>
     }
 }
+
+    </main>
+</div>
 
 @code {
     private List<Registration> _registrations = new();

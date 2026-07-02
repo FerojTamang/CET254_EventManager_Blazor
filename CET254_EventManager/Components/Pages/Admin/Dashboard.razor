@@ -1,144 +1,193 @@
 @page "/admin"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using CET254_EventManager.Components.Shared
 @inject IAdminDashboardService AdminDashboardService
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 
-<PageTitle>Blazor Admin Dashboard</PageTitle>
+<PageTitle>Admin Dashboard</PageTitle>
 
-<section class="page-hero">
-    <div>
-        <p class="page-kicker">Administration</p>
-        <h1 class="mb-2">Admin Dashboard</h1>
-        <p class="page-subtitle mb-0">Welcome back, Admin! Here's what's happening in your community.</p>
-    </div>
-    <a class="btn btn-primary" href="/admin/events">Create Event</a>
-</section>
-
-@if (_isLoading)
-{
-    <div class="alert alert-info" role="status">
-        Loading admin dashboard...
-    </div>
-}
-else if (!_isAuthenticated)
-{
-    <div class="alert alert-warning" role="alert">
-        Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to view this page.
-    </div>
-}
-else if (!_isAdmin)
-{
-    <div class="alert alert-danger" role="alert">
-        You do not have permission to view the admin dashboard.
-    </div>
-}
-else if (!string.IsNullOrWhiteSpace(_errorMessage))
-{
-    <div class="alert alert-danger" role="alert">
-        @_errorMessage
-    </div>
-}
-else if (_dashboard is not null)
-{
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="dashboard-stat-card"><span class="stat-icon">E</span><div><div class="text-muted small">Total Events</div><strong>@_dashboard.TotalEvents</strong><small>Published programme</small></div></div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="dashboard-stat-card"><span class="stat-icon">P</span><div><div class="text-muted small">Total Participants</div><strong>@_dashboard.TotalParticipants</strong><small>Registered users</small></div></div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="dashboard-stat-card"><span class="stat-icon">R</span><div><div class="text-muted small">Total Registrations</div><strong>@TotalRegistrations</strong><small>All statuses</small></div></div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="dashboard-stat-card"><span class="stat-icon">V</span><div><div class="text-muted small">Total Venues</div><strong>@_dashboard.TotalVenues</strong><small>Available spaces</small></div></div>
-        </div>
-    </div>
-
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-orange">P</span><div><div class="text-muted small">Pending Registrations</div><strong>@_dashboard.PendingRegistrations</strong></div></div>
-        </div>
-        <div class="col-md-4">
-            <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-green">C</span><div><div class="text-muted small">Confirmed Registrations</div><strong>@_dashboard.ConfirmedRegistrations</strong></div></div>
-        </div>
-        <div class="col-md-4">
-            <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-gray">X</span><div><div class="text-muted small">Cancelled Registrations</div><strong>@_dashboard.CancelledRegistrations</strong></div></div>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="card admin-table-card h-100">
-                <div class="card-header p-4">
-                    <h2 class="h5 mb-0">Recent Registrations</h2>
-                </div>
-                @if (_dashboard.RecentRegistrations.Any())
-                {
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Event</th>
-                                    <th scope="col">Participant</th>
-                                    <th scope="col">Registered</th>
-                                    <th scope="col">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var registration in _dashboard.RecentRegistrations)
-                                {
-                                    <tr>
-                                        <td class="fw-semibold">@registration.EventTitle</td>
-                                        <td>@registration.ParticipantName</td>
-                                        <td>@registration.RegistrationDate.ToString("g")</td>
-                                        <td><span class="status-badge @GetStatusBadgeClass(registration.Status)">@registration.Status</span></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <div class="card-body p-4">
-                        <p class="mb-0 text-muted">No registrations yet.</p>
-                    </div>
-                }
+<div class="admin-app-shell">
+    <AdminSidebar />
+    <main class="admin-app-main">
+        @if (_isLoading)
+        {
+            <div class="alert alert-info" role="status">
+                Loading admin dashboard...
             </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header p-4">
-                    <h2 class="h5 mb-0">Quick Actions</h2>
+        }
+        else if (!_isAuthenticated)
+        {
+            <div class="alert alert-warning" role="alert">
+                Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to view this page.
+            </div>
+        }
+        else if (!_isAdmin)
+        {
+            <div class="alert alert-danger" role="alert">
+                You do not have permission to view the admin dashboard.
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @_errorMessage
+            </div>
+        }
+        else if (_dashboard is not null)
+        {
+            <div class="admin-topbar">
+                <div>
+                    <span class="admin-section-kicker">Admin</span>
+                    <h1>Dashboard</h1>
                 </div>
-                <div class="card-body quick-actions p-4">
-                    <a class="quick-action-card" href="/admin/events">
-                        <span class="quick-action-icon">E</span>
-                        <span><strong>Events</strong><small>Create and manage the programme</small></span>
-                    </a>
-                    <a class="quick-action-card" href="/admin/registrations">
-                        <span class="quick-action-icon">R</span>
-                        <span><strong>Registrations</strong><small>Confirm or cancel participant requests</small></span>
-                    </a>
-                    <a class="quick-action-card" href="/admin/participants">
-                        <span class="quick-action-icon">P</span>
-                        <span><strong>Participants</strong><small>Create and manage participant profiles</small></span>
-                    </a>
-                    <a class="quick-action-card" href="/admin/venues">
-                        <span class="quick-action-icon">V</span>
-                        <span><strong>Venues</strong><small>Maintain locations and capacity</small></span>
-                    </a>
-                    <a class="quick-action-card" href="/admin/activities">
-                        <span class="quick-action-icon">A</span>
-                        <span><strong>Activities</strong><small>Organize activity options</small></span>
-                    </a>
+                <input class="admin-search-box" placeholder="Search events, participants, venues..." aria-label="Search admin records" />
+                <div class="admin-profile-box">
+                    <span>A</span>
+                    <div>
+                        <strong>Administrator</strong>
+                        <small>Admin area</small>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-}
+
+            <div class="admin-dashboard-content">
+                <section class="admin-dashboard-hero">
+                    <div class="admin-hero-copy">
+                        <span class="admin-hero-badge">Administrator Area</span>
+                        <h2>Welcome back, Administrator!</h2>
+                        <p>Control centre for managing community events, participants, venues, activities and registrations.</p>
+                        <div class="admin-hero-actions">
+                            <a class="btn btn-light" href="/admin/events">Create New Event</a>
+                            <a class="btn btn-outline-light" href="/events">View All Events</a>
+                        </div>
+                    </div>
+
+                    <div class="admin-hero-visual" aria-hidden="true">
+                        <div class="admin-schedule-card">
+                            <div class="admin-schedule-top">
+                                <span>Schedule</span>
+                                <strong>@DateTime.Today.ToString("MMM yyyy")</strong>
+                            </div>
+                            <div class="admin-schedule-grid">
+                                <span></span>
+                                <span></span>
+                                <span class="is-active"></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <div class="admin-schedule-total">
+                                <strong>@TotalRegistrations</strong>
+                                <span>registrations</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="admin-stat-grid" aria-label="Dashboard statistics">
+                    @StatCard("E", _dashboard.TotalEvents, "Total Events", "Events currently held in the programme.", "/admin/events", "Manage events", "accent-blue")
+                    @StatCard("P", _dashboard.TotalParticipants, "Participants", "Participant profiles available to manage.", "/admin/participants", "Manage participants", "accent-purple")
+                    @StatCard("V", _dashboard.TotalVenues, "Venues", "Venues available for event scheduling.", "/admin/venues", "Manage venues", "accent-green")
+                    @StatCard("A", _dashboard.TotalActivities, "Activities", "Activities assigned across community events.", "/admin/activities", "Manage activities", "accent-orange")
+                    @StatCard("R", TotalRegistrations, "Registrations", "All registration records across statuses.", "/admin/registrations", "View registrations", "accent-indigo")
+                </section>
+
+                <section class="admin-dashboard-grid">
+                    <article class="admin-panel-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Registration status</span>
+                                <h2>Registration Status Overview</h2>
+                            </div>
+                            <a class="btn btn-sm btn-outline-primary" href="/admin/registrations">Manage</a>
+                        </div>
+
+                        @if (TotalRegistrations == 0)
+                        {
+                            <div class="admin-empty-state">
+                                <strong>No registrations found.</strong>
+                                <span>No pending registrations at the moment.</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="admin-overview-list">
+                                @ProgressRow("Pending", _dashboard.PendingRegistrations, "status-pending")
+                                @ProgressRow("Confirmed", _dashboard.ConfirmedRegistrations, "status-confirmed")
+                                @ProgressRow("Cancelled", _dashboard.CancelledRegistrations, "status-cancelled")
+                            </div>
+                        }
+                    </article>
+
+                    <article class="admin-panel-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Shortcuts</span>
+                                <h2>Quick Actions</h2>
+                            </div>
+                        </div>
+                        <div class="admin-action-grid">
+                            @ActionTile("E", "Manage Events", "Create, update, delete, and assign venues or activities.", "/admin/events")
+                            @ActionTile("P", "Manage Participants", "Review and maintain participant records.", "/admin/participants")
+                            @ActionTile("V", "Manage Venues", "Maintain locations and venue capacity.", "/admin/venues")
+                            @ActionTile("A", "Manage Activities", "Organize workshops, talks, games, and other activities.", "/admin/activities")
+                            @ActionTile("R", "Manage Registrations", "Confirm or cancel participant registrations.", "/admin/registrations")
+                        </div>
+                    </article>
+                </section>
+
+                <section class="admin-panel-card">
+                    <div class="admin-panel-header">
+                        <div>
+                            <span class="admin-section-kicker">Latest activity</span>
+                            <h2>Recent Registrations</h2>
+                        </div>
+                        <a class="btn btn-sm btn-outline-primary" href="/admin/registrations">Open registrations</a>
+                    </div>
+
+                    @if (_dashboard.RecentRegistrations.Any())
+                    {
+                        <div class="admin-recent-table">
+                            <div class="admin-registration-row admin-registration-heading">
+                                <span>Participant</span>
+                                <span>Event</span>
+                                <span>Date / Time</span>
+                                <span>Status</span>
+                            </div>
+                            @foreach (var registration in _dashboard.RecentRegistrations)
+                            {
+                                <article class="admin-registration-row">
+                                    <div>
+                                        <strong>@registration.ParticipantName</strong>
+                                        <small>Participant</small>
+                                    </div>
+                                    <div>
+                                        <span>@registration.EventTitle</span>
+                                        <small>Event</small>
+                                    </div>
+                                    <div>
+                                        <span>@registration.RegistrationDate.ToString("dd MMM yyyy, h:mm tt")</span>
+                                    </div>
+                                    <div>
+                                        <span class="admin-status-badge @GetAdminStatusClass(registration.Status)">@registration.Status</span>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="admin-empty-state">
+                            <strong>No registrations found.</strong>
+                            <span>New participant registrations will appear here.</span>
+                        </div>
+                    }
+                </section>
+            </div>
+        }
+    </main>
+</div>
 
 @code {
     private AdminDashboardViewModel? _dashboard;
@@ -177,20 +226,51 @@ else if (_dashboard is not null)
         }
     }
 
+    private RenderFragment StatCard(string icon, int value, string label, string description, string href, string linkText, string accentClass) => @<article class="admin-stat-card">
+        <span class="admin-stat-icon @accentClass">@icon</span>
+        <div class="admin-stat-copy">
+            <strong>@value</strong>
+            <span>@label</span>
+            <small>@description</small>
+        </div>
+        <a class="admin-stat-link" href="@href">@linkText</a>
+    </article>;
+
+    private RenderFragment ProgressRow(string label, int count, string statusClass) => @<div class="admin-progress-row">
+        <div class="admin-progress-label">
+            <span class="admin-status-badge @statusClass">@label</span>
+            <strong>@count <small>@GetRegistrationPercentage(count)%</small></strong>
+        </div>
+        <div class="admin-progress-track" role="progressbar" aria-label="@($"{label} registrations")" aria-valuenow="@GetRegistrationPercentage(count)" aria-valuemin="0" aria-valuemax="100">
+            <span class="admin-progress-fill @statusClass" style="width: @GetRegistrationPercentage(count)%"></span>
+        </div>
+    </div>;
+
+    private static RenderFragment ActionTile(string icon, string title, string description, string href) => @<a class="admin-action-tile" href="@href">
+        <span>@icon</span>
+        <strong>@title</strong>
+        <small>@description</small>
+    </a>;
+
     private string GetLoginUrl()
     {
         var returnUrl = new Uri(NavigationManager.Uri).PathAndQuery;
         return $"/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
     }
 
-    private static string GetStatusBadgeClass(RegistrationStatus status)
+    private int GetRegistrationPercentage(int count)
+    {
+        return TotalRegistrations == 0 ? 0 : (int)Math.Round((double)count / TotalRegistrations * 100);
+    }
+
+    private static string GetAdminStatusClass(RegistrationStatus status)
     {
         return status switch
         {
-            RegistrationStatus.Pending => "badge-orange",
-            RegistrationStatus.Confirmed => "badge-green",
-            RegistrationStatus.Cancelled => "badge-gray",
-            _ => "badge-blue"
+            RegistrationStatus.Pending => "status-pending",
+            RegistrationStatus.Confirmed => "status-confirmed",
+            RegistrationStatus.Cancelled => "status-cancelled",
+            _ => "status-cancelled"
         };
     }
 }
