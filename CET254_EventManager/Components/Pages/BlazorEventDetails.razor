@@ -1,0 +1,179 @@
+@page "/blazor/events/{Id:int}"
+@inject IEventService EventService
+
+<PageTitle>Blazor Event Details</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+        <p class="text-uppercase text-muted fw-semibold mb-1">Blazor event details</p>
+        <h1 class="mb-1">@(_eventItem?.Title ?? "Event Details")</h1>
+        <p class="text-muted mb-0">Read-only event information using the existing service layer.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-primary" href="/blazor/events">Back to Blazor Events</a>
+        <a class="btn btn-outline-secondary" href="/Events/Details/@Id">MVC Details</a>
+    </div>
+</div>
+
+@if (_isLoading)
+{
+    <div class="alert alert-info" role="status">
+        Loading event details...
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @_errorMessage
+    </div>
+}
+else if (_eventItem is not null)
+{
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <article class="card event-card h-100">
+                <div class="card-body">
+                    <h2 class="h4">@_eventItem.Title</h2>
+                    <p class="text-muted">@_eventItem.Description</p>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-uppercase small text-muted">Date</dt>
+                        <dd class="col-sm-8">@_eventItem.EventDate.ToString("dddd, dd MMM yyyy")</dd>
+
+                        <dt class="col-sm-4 text-uppercase small text-muted">Start time</dt>
+                        <dd class="col-sm-8">@FormatTime(_eventItem.StartTime)</dd>
+
+                        <dt class="col-sm-4 text-uppercase small text-muted">End time</dt>
+                        <dd class="col-sm-8">@FormatTime(_eventItem.EndTime)</dd>
+
+                        <dt class="col-sm-4 text-uppercase small text-muted">Registration status</dt>
+                        <dd class="col-sm-8">Registration will be added in the next Blazor stage.</dd>
+                    </dl>
+                </div>
+            </article>
+        </div>
+
+        <div class="col-lg-4">
+            <aside class="card h-100">
+                <div class="card-body">
+                    <h2 class="h5">Capacity</h2>
+                    <dl>
+                        <dt class="small text-uppercase text-muted">Confirmed registrations</dt>
+                        <dd>@GetConfirmedRegistrationCount(_eventItem)</dd>
+
+                        <dt class="small text-uppercase text-muted">Capacity remaining</dt>
+                        <dd>@GetCapacityRemainingText(_eventItem)</dd>
+                    </dl>
+
+                    <h2 class="h5 mt-4">Venues</h2>
+                    @if (GetVenues(_eventItem).Count == 0)
+                    {
+                        <p class="text-muted mb-0">Venue to be confirmed.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var venue in GetVenues(_eventItem))
+                            {
+                                <li class="mb-3">
+                                    <div class="fw-semibold">@venue.Name</div>
+                                    <div class="text-muted">@venue.Address</div>
+                                    <div class="small text-muted">Capacity: @venue.Capacity</div>
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    <h2 class="h5 mt-4">Activities</h2>
+                    @if (GetActivities(_eventItem).Count == 0)
+                    {
+                        <p class="text-muted mb-0">Activities to be confirmed.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var activity in GetActivities(_eventItem))
+                            {
+                                <li class="mb-3">
+                                    <div class="fw-semibold">@activity.Name</div>
+                                    <div class="small text-muted">@activity.ActivityType</div>
+                                    <div class="text-muted">@activity.Description</div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </aside>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Event? _eventItem;
+    private bool _isLoading = true;
+    private string? _errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            _eventItem = await EventService.GetEventDetailsAsync(Id);
+        }
+        catch
+        {
+            _eventItem = null;
+            _errorMessage = "Unable to load this event. It may no longer exist.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private static string FormatTime(TimeSpan time)
+    {
+        return DateTime.Today.Add(time).ToString("h:mm tt");
+    }
+
+    private static List<Venue> GetVenues(Event eventItem)
+    {
+        return eventItem.EventVenues
+            .Where(eventVenue => eventVenue.Venue is not null)
+            .Select(eventVenue => eventVenue.Venue)
+            .DistinctBy(venue => venue.Id)
+            .ToList();
+    }
+
+    private static List<Models.Activity> GetActivities(Event eventItem)
+    {
+        return eventItem.EventActivities
+            .Where(eventActivity => eventActivity.Activity is not null)
+            .Select(eventActivity => eventActivity.Activity)
+            .DistinctBy(activity => activity.Id)
+            .ToList();
+    }
+
+    private static int GetConfirmedRegistrationCount(Event eventItem)
+    {
+        return eventItem.Registrations.Count(registration => registration.Status == RegistrationStatus.Confirmed);
+    }
+
+    private static string GetCapacityRemainingText(Event eventItem)
+    {
+        var venues = GetVenues(eventItem);
+
+        if (venues.Count == 0)
+        {
+            return "Capacity to be confirmed";
+        }
+
+        var remaining = venues.Min(venue => venue.Capacity) - GetConfirmedRegistrationCount(eventItem);
+        return remaining.ToString();
+    }
+}
