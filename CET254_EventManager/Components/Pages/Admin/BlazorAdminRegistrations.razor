@@ -1,3 +1,4 @@
+@page "/admin/registrations"
 @page "/blazor/admin/registrations"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @inject IRegistrationService RegistrationService
@@ -6,17 +7,13 @@
 
 <PageTitle>Blazor Admin Registrations</PageTitle>
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+<section class="page-hero">
     <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Admin management</p>
-        <h1 class="mb-1">Registrations</h1>
-        <p class="text-muted mb-0">Review participant requests and update registration status.</p>
+        <p class="page-kicker">Admin management</p>
+        <h1 class="mb-2">Registrations</h1>
+        <p class="page-subtitle mb-0">Review participant requests and update registration status.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-outline-primary" href="/blazor/admin">Blazor Admin Dashboard</a>
-        <a class="btn btn-outline-secondary" href="/AdminRegistrations">MVC Registrations</a>
-    </div>
-</div>
+</section>
 
 @if (_isLoading)
 {

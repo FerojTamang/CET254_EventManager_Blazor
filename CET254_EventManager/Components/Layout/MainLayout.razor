@@ -11,39 +11,60 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="blazorNavbar">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-lg-1">
+                <ul class="navbar-nav flex-grow-1 gap-lg-1">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">MVC Home</a>
+                        <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">Home</NavLink>
                     </li>
                     <li class="nav-item">
-                        <NavLink class="nav-link" href="/blazor/events">Blazor Events</NavLink>
+                        <NavLink class="nav-link" href="/events">Events</NavLink>
                     </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/blazor/my-registrations">My Registrations</NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/blazor/admin">Admin</NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/blazor/admin/events">Events</NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/blazor/admin/participants">Participants</NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/blazor/admin/venues">Venues</NavLink>
-                    </li>
-                    <li class="nav-item">
-                        <NavLink class="nav-link" href="/blazor/admin/activities">Activities</NavLink>
-                    </li>
+                    <AuthorizeView>
+                        <Authorized>
+                            <li class="nav-item">
+                                <NavLink class="nav-link" href="/my-registrations">My Registrations</NavLink>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
+                    <AuthorizeView Roles="Admin">
+                        <Authorized>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Admin
+                                </a>
+                                <ul class="dropdown-menu border-0 shadow" aria-labelledby="adminMenu">
+                                    <li><a class="dropdown-item" href="/admin">Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="/admin/events">Events</a></li>
+                                    <li><a class="dropdown-item" href="/admin/venues">Venues</a></li>
+                                    <li><a class="dropdown-item" href="/admin/activities">Activities</a></li>
+                                    <li><a class="dropdown-item" href="/admin/participants">Participants</a></li>
+                                    <li><a class="dropdown-item" href="/admin/registrations">Registrations</a></li>
+                                </ul>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
                 </ul>
                 <ul class="navbar-nav gap-lg-1">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Identity/Account/Login">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-pill" href="/Identity/Account/Register">Register</a>
-                    </li>
+                    <AuthorizeView Context="authContext">
+                        <Authorized>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/Identity/Account/Manage" title="Manage">Hello @authContext.User.Identity?.Name!</a>
+                            </li>
+                            <li class="nav-item">
+                                <form class="form-inline" action="/Identity/Account/Logout?returnUrl=%2F" method="post">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="nav-link btn btn-link">Logout</button>
+                                </form>
+                            </li>
+                        </Authorized>
+                        <NotAuthorized>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/Identity/Account/Register">Register</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-pill" href="/Identity/Account/Login">Login</a>
+                            </li>
+                        </NotAuthorized>
+                    </AuthorizeView>
                 </ul>
             </div>
         </div>
@@ -55,3 +76,44 @@
         @Body
     </main>
 </div>
+
+<footer class="site-footer app-footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="brand-mark brand-mark-footer">CE</span>
+                    <span class="fw-bold">Community Events</span>
+                </div>
+                <p class="footer-copy">A CET254 Advanced Programming project for browsing, managing, and registering for local community events.</p>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6>Quick Links</h6>
+                <a href="/">Home</a>
+                <a href="/events">Events</a>
+                <a href="/my-registrations">My Registrations</a>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6>For Organizers</h6>
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/events">Manage Events</a>
+                <a href="/admin/registrations">Registrations</a>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6>Support</h6>
+                <span>Validation</span>
+                <span>Role access</span>
+                <span>Unit tested</span>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6>Newsletter</h6>
+                <p class="footer-copy mb-2">Updates placeholder for future email notifications.</p>
+                <div class="newsletter-placeholder">Coming soon</div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 Community Events</span>
+            <span>ASP.NET Core MVC | EF Core | Identity | xUnit</span>
+        </div>
+    </div>
+</footer>

@@ -1,3 +1,4 @@
+@page "/my-registrations"
 @page "/blazor/my-registrations"
 @inject IRegistrationService RegistrationService
 @inject IParticipantService ParticipantService
@@ -7,17 +8,14 @@
 
 <PageTitle>Blazor My Registrations</PageTitle>
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+<section class="page-hero">
     <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Participant area</p>
-        <h1 class="mb-1">My Registrations</h1>
-        <p class="text-muted mb-0">View and manage your own event registrations.</p>
+        <p class="page-kicker">Participant area</p>
+        <h1 class="mb-2">My Registrations</h1>
+        <p class="page-subtitle mb-0">Track your event registrations, statuses, and upcoming participation.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-primary" href="/blazor/events">Browse Blazor Events</a>
-        <a class="btn btn-outline-secondary" href="/MyRegistrations">MVC My Registrations</a>
-    </div>
-</div>
+    <a class="btn btn-primary" href="/events">Browse Events</a>
+</section>
 
 @if (_isLoading)
 {
@@ -52,7 +50,7 @@ else
         <div class="empty-state">
             <h2 class="h4">No participant profile found</h2>
             <p class="text-muted mb-3">Your account is not linked to a participant profile yet.</p>
-            <a class="btn btn-primary" href="/blazor/events">Browse upcoming events</a>
+            <a class="btn btn-primary" href="/events">Browse upcoming events</a>
         </div>
     }
     else if (_registrations.Count == 0)
@@ -60,40 +58,57 @@ else
         <div class="empty-state">
             <h2 class="h4">No registrations yet</h2>
             <p class="text-muted mb-3">Browse upcoming community events and register for one that interests you.</p>
-            <a class="btn btn-primary" href="/blazor/events">Browse upcoming events</a>
+            <a class="btn btn-primary" href="/events">Browse upcoming events</a>
         </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead>
-                    <tr>
-                        <th scope="col">Event</th>
-                        <th scope="col">Event Date</th>
-                        <th scope="col">Event Time</th>
-                        <th scope="col">Registered</th>
-                        <th scope="col">Status</th>
-                        <th scope="col" class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="dashboard-stat-card">
+                    <span class="stat-icon">T</span>
+                    <div><div class="text-muted small">Total Registrations</div><strong>@_registrations.Count</strong></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dashboard-stat-card">
+                    <span class="stat-icon">U</span>
+                    <div><div class="text-muted small">Upcoming Events</div><strong>@_registrations.Count(registration => registration.Status != RegistrationStatus.Cancelled)</strong></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dashboard-stat-card">
+                    <span class="stat-icon">C</span>
+                    <div><div class="text-muted small">Confirmed</div><strong>@_registrations.Count(registration => registration.Status == RegistrationStatus.Confirmed)</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="d-grid gap-3">
                     @foreach (var registration in _registrations)
                     {
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">@GetEventTitle(registration)</div>
-                                <a class="small" href="/blazor/events/@registration.EventId">View event</a>
-                            </td>
-                            <td>@FormatEventDate(registration)</td>
-                            <td>@FormatEventTime(registration)</td>
-                            <td>@registration.RegistrationDate.ToString("g")</td>
-                            <td>
-                                <span class="status-badge @GetStatusBadgeClass(registration.Status)">
-                                    @registration.Status
-                                </span>
-                            </td>
-                            <td class="text-end">
+                        <article class="registration-card">
+                            <div class="registration-thumb">
+                                <span>@registration.RegistrationDate.ToString("MMM")</span>
+                                <strong>@registration.RegistrationDate.Day</strong>
+                            </div>
+                            <div class="registration-content">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                                    <div>
+                                        <h2 class="h5 mb-1">@GetEventTitle(registration)</h2>
+                                        <p class="text-muted small mb-0">Registered @registration.RegistrationDate.ToString("g")</p>
+                                    </div>
+                                    <span class="status-badge @GetStatusBadgeClass(registration.Status)">@registration.Status</span>
+                                </div>
+                                <p class="text-muted mb-3">Open the event details page to review the latest date, time, venue, and activity information.</p>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <span class="activity-badge badge-blue">Community</span>
+                                    <span class="activity-badge badge-purple">Event</span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a class="btn btn-sm btn-outline-primary" href="/events/@registration.EventId">View Details</a>
                                 @if (CanCancel(registration))
                                 {
                                     <button type="button"
@@ -103,15 +118,33 @@ else
                                         @(IsCancelling(registration) ? "Cancelling..." : "Cancel")
                                     </button>
                                 }
-                                else
-                                {
-                                    <span class="text-muted small">No action available</span>
-                                }
-                            </td>
-                        </tr>
+                                </div>
+                            </div>
+                        </article>
                     }
-                </tbody>
-            </table>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <aside class="status-guide p-4 mb-4">
+                    <h2 class="h5 mb-3">Registration Status Guide</h2>
+                    <div class="mb-3">
+                        <span class="badge badge-green mb-1">Confirmed</span>
+                        <p class="text-muted small mb-0">Your registration is confirmed.</p>
+                    </div>
+                    <div class="mb-3">
+                        <span class="badge badge-orange mb-1">Pending</span>
+                        <p class="text-muted small mb-0">Your registration is awaiting approval.</p>
+                    </div>
+                    <div>
+                        <span class="badge badge-gray mb-1">Cancelled</span>
+                        <p class="text-muted small mb-0">Your registration has been cancelled.</p>
+                    </div>
+                </aside>
+                <aside class="status-guide p-4">
+                    <h2 class="h5 mb-2">Need help?</h2>
+                    <p class="text-muted mb-0">Contact an administrator if you need support with your registration.</p>
+                </aside>
+            </div>
         </div>
     }
 }

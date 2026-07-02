@@ -1,3 +1,4 @@
+@page "/admin/venues"
 @page "/blazor/admin/venues"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Components.Forms
@@ -8,18 +9,14 @@
 
 <PageTitle>Blazor Admin Venues</PageTitle>
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+<section class="page-hero">
     <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Admin management</p>
-        <h1 class="mb-1">Venues</h1>
-        <p class="text-muted mb-0">Create, edit, and review event locations.</p>
+        <p class="page-kicker">Admin management</p>
+        <h1 class="mb-2">Venues</h1>
+        <p class="page-subtitle mb-0">Maintain locations, addresses, and capacity for events.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Venue</button>
-        <a class="btn btn-outline-primary" href="/blazor/admin">Blazor Admin Dashboard</a>
-        <a class="btn btn-outline-secondary" href="/AdminVenues">MVC Venues</a>
-    </div>
-</div>
+    <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create New</button>
+</section>
 
 @if (_isLoading)
 {
@@ -57,6 +54,11 @@ else
 
     @if (_mode == PageMode.Create)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Create Venue</h1>
+            <p class="page-subtitle mb-0">Add a venue for future community events.</p>
+        </section>
         <div class="card form-card mb-4">
             <div class="card-header p-4">
                 <h2 class="h5 mb-0">Create Venue</h2>
@@ -76,6 +78,11 @@ else
     }
     else if (_mode == PageMode.Edit)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Edit Venue</h1>
+            <p class="page-subtitle mb-0">Keep venue address and capacity information accurate.</p>
+        </section>
         <div class="card form-card mb-4">
             <div class="card-header p-4">
                 <h2 class="h5 mb-0">Edit Venue</h2>
@@ -119,10 +126,12 @@ else
     }
     else if (_mode == PageMode.Delete && _selectedVenue is not null)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Delete Venue</h1>
+            <p class="page-subtitle mb-0">Review this venue before deletion.</p>
+        </section>
         <div class="card mb-4">
-            <div class="card-header p-4">
-                <h2 class="h5 mb-0">Delete Venue</h2>
-            </div>
             <div class="card-body p-4">
                 @if (GetAssignedEventCount(_selectedVenue.Id) > 0)
                 {
@@ -175,7 +184,7 @@ else
                             <tr>
                                 <td class="fw-semibold">@venue.Name</td>
                                 <td>@venue.Address</td>
-                                <td>@venue.Capacity</td>
+                                <td><span class="badge badge-blue">@venue.Capacity seats</span></td>
                                 <td>@GetAssignedEventCount(venue.Id)</td>
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm">

@@ -1,16 +1,19 @@
+@page "/events"
 @page "/blazor/events"
 @inject IEventService EventService
+@inject IVenueService VenueService
+@inject IActivityService ActivityService
 
-<PageTitle>Blazor Events</PageTitle>
+<PageTitle>Events</PageTitle>
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+<section class="page-hero">
     <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Blazor presentation layer</p>
-        <h1 class="mb-1">Upcoming Events</h1>
-        <p class="text-muted mb-0">Read-only event list using the existing service layer.</p>
+        <p class="page-kicker">Community programme</p>
+        <h1 class="mb-2">Upcoming Events</h1>
+        <p class="page-subtitle mb-0">Discover and register for local community events happening near you.</p>
     </div>
-    <a class="btn btn-outline-primary" href="/Events">MVC Events</a>
-</div>
+    <span class="badge badge-blue">Showing @_events.Count event(s)</span>
+</section>
 
 @if (_isLoading)
 {
@@ -32,30 +35,104 @@ else if (_events.Count == 0)
 }
 else
 {
+    <div class="card filter-card mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-3 col-md-6">
+                    <label for="searchTerm" class="form-label">Search Term</label>
+                    <input id="searchTerm" class="form-control" placeholder="Search events" @bind="_filter.SearchTerm" @bind:event="oninput" />
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label for="eventDate" class="form-label">Event Date</label>
+                    <input id="eventDate" type="date" class="form-control" value="@FormatDateInput(_filter.Date)" @onchange="SetFilterDate" />
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label for="venueId" class="form-label">Venue</label>
+                    <select id="venueId" class="form-select" value="@(_filter.VenueId?.ToString() ?? string.Empty)" @onchange="SetFilterVenue">
+                        <option value="">All venues</option>
+                        @foreach (var venue in _venues)
+                        {
+                            <option value="@venue.Id">@venue.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label for="activityId" class="form-label">Activity</label>
+                    <select id="activityId" class="form-select" value="@(_filter.ActivityId?.ToString() ?? string.Empty)" @onchange="SetFilterActivity">
+                        <option value="">All activities</option>
+                        @foreach (var activity in _activities)
+                        {
+                            <option value="@activity.Id">@activity.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label for="activityType" class="form-label">Activity Type</label>
+                    <select id="activityType" class="form-select" @bind="_filter.ActivityType">
+                        <option value="">All types</option>
+                        @foreach (var activityType in Enum.GetValues<ActivityType>())
+                        {
+                            <option value="@activityType">@activityType</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-lg-1 col-md-6">
+                    <button type="button" class="btn btn-primary w-100" @onclick="LoadEventsAsync">Filter</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="text-muted small">Refine by keyword, date, venue, activity, or type.</span>
+            <button type="button" class="btn btn-link text-decoration-none p-0" @onclick="ClearFiltersAsync">Clear Filters</button>
+        </div>
+    </div>
+
     <div class="row g-4">
         @foreach (var eventItem in _events)
         {
-            <div class="col-md-6 col-xl-4">
+            var capacityRemaining = GetCapacityRemaining(eventItem);
+            var isFull = capacityRemaining.HasValue && capacityRemaining <= 0;
+            var isAlmostFull = capacityRemaining.HasValue && capacityRemaining > 0 && capacityRemaining <= 5;
+            var statusClass = isFull ? "badge-gray" : isAlmostFull ? "badge-orange" : "badge-green";
+            var statusText = isFull ? "Full" : isAlmostFull ? "Almost Full" : "Open";
+            var capacityLabel = capacityRemaining.HasValue ? $"{Math.Max(capacityRemaining.Value, 0)} spaces left" : "Open capacity";
+            var visualClass = GetVisualClass(eventItem);
+
+            <div class="col-xl-4 col-md-6">
                 <article class="card h-100 event-card">
-                    <div class="card-body d-flex flex-column">
-                        <h2 class="h5 card-title">@eventItem.Title</h2>
-                        <p class="text-muted mb-3">@eventItem.Description</p>
-                        <dl class="mb-0">
-                            <dt class="small text-uppercase text-muted">Date</dt>
-                            <dd>@eventItem.EventDate.ToString("dddd, dd MMM yyyy")</dd>
-
-                            <dt class="small text-uppercase text-muted">Time</dt>
-                            <dd>@FormatTime(eventItem.StartTime) - @FormatTime(eventItem.EndTime)</dd>
-
-                            <dt class="small text-uppercase text-muted">Venue</dt>
-                            <dd>@GetVenueSummary(eventItem)</dd>
-
-                            <dt class="small text-uppercase text-muted">Activities</dt>
-                            <dd>@GetActivitySummary(eventItem)</dd>
-                        </dl>
-                        <div class="mt-auto pt-3">
-                            <a class="btn btn-primary" href="/blazor/events/@eventItem.Id">View Details</a>
+                    <div class="event-visual @visualClass">
+                        <span class="status-badge @statusClass">@statusText</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="date-pill">
+                                <span>@eventItem.EventDate.ToString("MMM")</span>
+                                <strong>@eventItem.EventDate.Day</strong>
+                            </div>
+                            <div class="min-w-0">
+                                <h2 class="h5 mb-1">@eventItem.Title</h2>
+                                <p class="text-muted small mb-1">@GetVenueSummary(eventItem)</p>
+                                <p class="text-muted small mb-0">@FormatTimeShort(eventItem.StartTime) - @FormatTimeShort(eventItem.EndTime)</p>
+                            </div>
                         </div>
+                        <p class="event-description mb-3">@GetShortDescription(eventItem.Description)</p>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            @foreach (var activity in GetActivityNames(eventItem))
+                            {
+                                <span class="activity-badge @GetActivityBadgeClass(activity)">@activity</span>
+                            }
+                        </div>
+                        <div class="registration-line">
+                            <span>@GetConfirmedRegistrationCount(eventItem) confirmed</span>
+                            <span>@capacityLabel</span>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex flex-wrap gap-2 p-4">
+                        <a class="btn btn-primary" href="/events/@eventItem.Id">View Details</a>
+                        @if (!isFull)
+                        {
+                            <a class="btn btn-outline-primary" href="/events/@eventItem.Id">Register</a>
+                        }
                     </div>
                 </article>
             </div>
@@ -66,6 +143,8 @@ else
 @code {
     private readonly EventFilterViewModel _filter = new();
     private List<Event> _events = new();
+    private List<Venue> _venues = new();
+    private List<Models.Activity> _activities = new();
     private bool _isLoading = true;
     private string? _errorMessage;
 
@@ -73,7 +152,9 @@ else
     {
         try
         {
-            _events = await EventService.GetFilteredUpcomingEventsAsync(_filter);
+            _venues = await VenueService.GetAllVenuesAsync();
+            _activities = await ActivityService.GetAllActivitiesAsync();
+            await LoadEventsAsync();
         }
         catch
         {
@@ -85,9 +166,49 @@ else
         }
     }
 
+    private async Task LoadEventsAsync()
+    {
+        _events = await EventService.GetFilteredUpcomingEventsAsync(_filter);
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        _filter.SearchTerm = null;
+        _filter.Date = null;
+        _filter.VenueId = null;
+        _filter.ActivityId = null;
+        _filter.ActivityType = null;
+        await LoadEventsAsync();
+    }
+
+    private void SetFilterDate(ChangeEventArgs args)
+    {
+        _filter.Date = DateTime.TryParse(args.Value?.ToString(), out var date) ? date : null;
+    }
+
+    private void SetFilterVenue(ChangeEventArgs args)
+    {
+        _filter.VenueId = int.TryParse(args.Value?.ToString(), out var id) ? id : null;
+    }
+
+    private void SetFilterActivity(ChangeEventArgs args)
+    {
+        _filter.ActivityId = int.TryParse(args.Value?.ToString(), out var id) ? id : null;
+    }
+
     private static string FormatTime(TimeSpan time)
     {
         return DateTime.Today.Add(time).ToString("h:mm tt");
+    }
+
+    private static string FormatTimeShort(TimeSpan time)
+    {
+        return time.ToString(@"hh\:mm");
+    }
+
+    private static string FormatDateInput(DateTime? date)
+    {
+        return date?.ToString("yyyy-MM-dd") ?? string.Empty;
     }
 
     private static string GetVenueSummary(Event eventItem)
@@ -110,5 +231,59 @@ else
             .ToList();
 
         return activities.Count == 0 ? "Activities to be confirmed" : string.Join(", ", activities);
+    }
+
+    private static List<string> GetActivityNames(Event eventItem)
+    {
+        return eventItem.EventActivities
+            .Where(eventActivity => eventActivity.Activity is not null)
+            .Select(eventActivity => eventActivity.Activity.Name)
+            .Distinct()
+            .ToList();
+    }
+
+    private static int GetConfirmedRegistrationCount(Event eventItem)
+    {
+        return eventItem.Registrations.Count(registration => registration.Status == RegistrationStatus.Confirmed);
+    }
+
+    private static int? GetCapacityRemaining(Event eventItem)
+    {
+        var capacities = eventItem.EventVenues
+            .Where(eventVenue => eventVenue.Venue is not null)
+            .Select(eventVenue => eventVenue.Venue.Capacity)
+            .ToList();
+
+        return capacities.Count == 0 ? null : capacities.Min() - GetConfirmedRegistrationCount(eventItem);
+    }
+
+    private static string GetShortDescription(string description)
+    {
+        return description.Length > 140 ? description[..140] + "..." : description;
+    }
+
+    private static string GetVisualClass(Event eventItem)
+    {
+        var activityText = string.Join(" ", GetActivityNames(eventItem)).ToLowerInvariant();
+
+        if (activityText.Contains("art") || activityText.Contains("movie") || activityText.Contains("family"))
+        {
+            return "event-visual-purple";
+        }
+
+        if (activityText.Contains("clean") || activityText.Contains("tree") || activityText.Contains("health") || activityText.Contains("outdoor"))
+        {
+            return "event-visual-green";
+        }
+
+        return "event-visual-blue";
+    }
+
+    private static string GetActivityBadgeClass(string activity)
+    {
+        return activity.Contains("Volunteer", StringComparison.OrdinalIgnoreCase) ? "badge-orange" :
+            activity.Contains("Family", StringComparison.OrdinalIgnoreCase) || activity.Contains("Entertainment", StringComparison.OrdinalIgnoreCase) ? "badge-purple" :
+            activity.Contains("Health", StringComparison.OrdinalIgnoreCase) || activity.Contains("Environment", StringComparison.OrdinalIgnoreCase) ? "badge-green" :
+            "badge-blue";
     }
 }

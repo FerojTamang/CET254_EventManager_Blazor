@@ -1,3 +1,4 @@
+@page "/admin/participants"
 @page "/blazor/admin/participants"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Components.Forms
@@ -8,18 +9,14 @@
 
 <PageTitle>Blazor Admin Participants</PageTitle>
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+<section class="page-hero">
     <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Admin management</p>
-        <h1 class="mb-1">Participants</h1>
-        <p class="text-muted mb-0">Create, edit, and review participant profiles.</p>
+        <p class="page-kicker">Admin management</p>
+        <h1 class="mb-2">Participants</h1>
+        <p class="page-subtitle mb-0">Create, edit, and review participant profiles linked to event registrations.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Participant</button>
-        <a class="btn btn-outline-primary" href="/blazor/admin">Blazor Admin Dashboard</a>
-        <a class="btn btn-outline-secondary" href="/AdminParticipants">MVC Participants</a>
-    </div>
-</div>
+    <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Participant</button>
+</section>
 
 @if (_isLoading)
 {
@@ -57,9 +54,14 @@ else
 
     @if (_mode == PageMode.Create)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Create Participant</h1>
+            <p class="page-subtitle mb-0">Add a participant profile without changing Identity user accounts.</p>
+        </section>
         <div class="card form-card mb-4">
             <div class="card-header p-4">
-                <h2 class="h5 mb-0">Create Participant</h2>
+                <h2 class="h5 mb-0">Participant Details</h2>
             </div>
             <EditForm Model="_formModel" OnValidSubmit="CreateParticipantAsync">
                 <DataAnnotationsValidator />
@@ -76,9 +78,14 @@ else
     }
     else if (_mode == PageMode.Edit)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Edit Participant</h1>
+            <p class="page-subtitle mb-0">Update participant contact details while preserving any Identity link.</p>
+        </section>
         <div class="card form-card mb-4">
             <div class="card-header p-4">
-                <h2 class="h5 mb-0">Edit Participant</h2>
+                <h2 class="h5 mb-0">Participant Details</h2>
             </div>
             <EditForm Model="_formModel" OnValidSubmit="UpdateParticipantAsync">
                 <DataAnnotationsValidator />
@@ -100,6 +107,11 @@ else
     }
     else if (_mode == PageMode.Details && _selectedParticipant is not null)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Participant Details</h1>
+            <p class="page-subtitle mb-0">View participant profile and registration summary.</p>
+        </section>
         <div class="card mb-4">
             <div class="card-header p-4 d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <div>
@@ -155,10 +167,12 @@ else
     }
     else if (_mode == PageMode.Delete && _selectedParticipant is not null)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Delete Participant</h1>
+            <p class="page-subtitle mb-0">Review this participant before deletion. Identity user accounts are not deleted here.</p>
+        </section>
         <div class="card mb-4">
-            <div class="card-header p-4">
-                <h2 class="h5 mb-0">Delete Participant</h2>
-            </div>
             <div class="card-body p-4">
                 @if (_selectedRegistrations.Count > 0)
                 {

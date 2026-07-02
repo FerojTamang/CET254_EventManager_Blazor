@@ -1,3 +1,4 @@
+@page "/admin/events"
 @page "/blazor/admin/events"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Components.Forms
@@ -9,18 +10,14 @@
 
 <PageTitle>Blazor Admin Events</PageTitle>
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+<section class="page-hero">
     <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Admin management</p>
-        <h1 class="mb-1">Events</h1>
-        <p class="text-muted mb-0">Create, review, and maintain the community programme.</p>
+        <p class="page-kicker">Admin management</p>
+        <h1 class="mb-2">Events</h1>
+        <p class="page-subtitle mb-0">Create, review, and maintain the community programme.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Event</button>
-        <a class="btn btn-outline-primary" href="/blazor/admin">Blazor Admin Dashboard</a>
-        <a class="btn btn-outline-secondary" href="/AdminEvents">MVC Events</a>
-    </div>
-</div>
+    <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create New</button>
+</section>
 
 @if (_isLoading)
 {
@@ -58,6 +55,11 @@ else
 
     @if (_mode == PageMode.Create)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Create Event</h1>
+            <p class="page-subtitle mb-0">Add a new community event with venues and activities.</p>
+        </section>
         <div class="card form-card mb-4">
             <div class="card-header p-4">
                 <h2 class="h5 mb-0">Create Event</h2>
@@ -78,6 +80,11 @@ else
     }
     else if (_mode == PageMode.Edit)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Edit Event</h1>
+            <p class="page-subtitle mb-0">Update event details, venue assignment, and activities.</p>
+        </section>
         <div class="card form-card mb-4">
             <div class="card-header p-4">
                 <h2 class="h5 mb-0">Edit Event</h2>
@@ -98,7 +105,7 @@ else
     }
     else if (_mode == PageMode.Details && _selectedEvent is not null)
     {
-        <div class="card mb-4">
+        <div class="card overflow-hidden mb-4">
             <div class="card-header p-4 d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <div>
                     <h2 class="h4 mb-1">@_selectedEvent.Title</h2>
@@ -153,6 +160,11 @@ else
     }
     else if (_mode == PageMode.Delete && _selectedEvent is not null)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Delete Event</h1>
+            <p class="page-subtitle mb-0">Review the event before permanently deleting it.</p>
+        </section>
         <div class="card mb-4">
             <div class="card-header p-4">
                 <h2 class="h5 mb-0">Delete Event</h2>

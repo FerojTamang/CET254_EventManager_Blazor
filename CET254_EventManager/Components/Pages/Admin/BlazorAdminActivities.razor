@@ -1,3 +1,4 @@
+@page "/admin/activities"
 @page "/blazor/admin/activities"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Components.Forms
@@ -8,18 +9,14 @@
 
 <PageTitle>Blazor Admin Activities</PageTitle>
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+<section class="page-hero">
     <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Admin management</p>
-        <h1 class="mb-1">Activities</h1>
-        <p class="text-muted mb-0">Create, edit, and review event activities.</p>
+        <p class="page-kicker">Admin management</p>
+        <h1 class="mb-2">Activities</h1>
+        <p class="page-subtitle mb-0">Manage activity labels and descriptions used by events.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Activity</button>
-        <a class="btn btn-outline-primary" href="/blazor/admin">Blazor Admin Dashboard</a>
-        <a class="btn btn-outline-secondary" href="/AdminActivities">MVC Activities</a>
-    </div>
-</div>
+    <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create New</button>
+</section>
 
 @if (_isLoading)
 {
@@ -57,6 +54,11 @@ else
 
     @if (_mode == PageMode.Create)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Create Activity</h1>
+            <p class="page-subtitle mb-0">Add a new activity type for event planning.</p>
+        </section>
         <div class="card form-card mb-4">
             <div class="card-header p-4">
                 <h2 class="h5 mb-0">Create Activity</h2>
@@ -76,6 +78,11 @@ else
     }
     else if (_mode == PageMode.Edit)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Edit Activity</h1>
+            <p class="page-subtitle mb-0">Update activity details used across events.</p>
+        </section>
         <div class="card form-card mb-4">
             <div class="card-header p-4">
                 <h2 class="h5 mb-0">Edit Activity</h2>
@@ -119,10 +126,12 @@ else
     }
     else if (_mode == PageMode.Delete && _selectedActivity is not null)
     {
+        <section class="page-banner">
+            <p class="page-kicker">Admin management</p>
+            <h1 class="mb-2">Delete Activity</h1>
+            <p class="page-subtitle mb-0">Review this activity before deletion.</p>
+        </section>
         <div class="card mb-4">
-            <div class="card-header p-4">
-                <h2 class="h5 mb-0">Delete Activity</h2>
-            </div>
             <div class="card-body p-4">
                 @if (GetAssignedEventCount(_selectedActivity.Id) > 0)
                 {

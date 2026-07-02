@@ -1,0 +1,274 @@
+@page "/"
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Home</PageTitle>
+
+<section class="hero-section mb-5">
+    <span class="hero-shape hero-shape-one"></span>
+    <span class="hero-shape hero-shape-two"></span>
+    <div class="row align-items-center g-5 position-relative">
+        <div class="col-lg-6">
+            <div class="hero-eyebrow mb-3">Community Events Platform</div>
+            <h1 class="hero-title mb-3">Community Event Management System</h1>
+            <p class="hero-subtitle lead mb-4">Browse, manage, and register for local community events with ease.</p>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="/events" class="btn btn-primary btn-lg">Browse Events</a>
+                @if (_isAuthenticated)
+                {
+                    <a href="/my-registrations" class="btn btn-outline-primary btn-lg">My Registrations</a>
+                }
+                else
+                {
+                    <a href="/Identity/Account/Login" class="btn btn-outline-primary btn-lg">Sign In to Register</a>
+                }
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="hero-visual hero-product-preview">
+                <article class="hero-featured-event-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge badge-blue">Volunteer</span>
+                        <span class="hero-bookmark" aria-hidden="true">&#9734;</span>
+                    </div>
+                    <div class="hero-event-image" aria-hidden="true">
+                        <span class="hero-event-sun"></span>
+                        <span class="hero-event-tree hero-event-tree-one"></span>
+                        <span class="hero-event-tree hero-event-tree-two"></span>
+                        <span class="hero-event-river"></span>
+                    </div>
+                    <h2 class="h4 mb-3">Community Clean-Up</h2>
+                    <div class="hero-event-details">
+                        <span>Sat, May 24, 2026</span>
+                        <span>9:00 AM &ndash; 12:00 PM</span>
+                        <span>Riverside Park</span>
+                    </div>
+                    <div class="hero-event-footer">
+                        <div class="hero-attendees">
+                            <span class="avatar-dot">A</span>
+                            <span class="avatar-dot avatar-dot-blue">M</span>
+                            <span class="avatar-dot avatar-dot-purple">J</span>
+                            <strong>48 going</strong>
+                        </div>
+                        <a href="/events" class="btn btn-primary">Register</a>
+                    </div>
+                </article>
+
+                <aside class="hero-side-stack">
+                    <section class="hero-preview-card hero-month-card" aria-label="Community events calendar">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <div class="text-muted small fw-semibold">Calendar</div>
+                                <h2 class="h5 mb-0">@_calendarMonth.ToString("MMMM yyyy")</h2>
+                            </div>
+                            <span class="badge badge-blue">Open</span>
+                        </div>
+                        <div class="hero-month-week">
+                            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                        </div>
+                        <div class="hero-month-grid">
+                            @for (var i = 0; i < _leadingBlankDays; i++)
+                            {
+                                <span class="hero-month-day is-empty"></span>
+                            }
+                            @for (var day = 1; day <= _daysInMonth; day++)
+                            {
+                                var isToday = day == _today.Day;
+                                var hasEvent = _eventDays.Contains(day);
+                                <span class="hero-month-day @(isToday ? "is-today" : string.Empty) @(hasEvent ? "has-event" : string.Empty)">
+                                    @day
+                                </span>
+                            }
+                            @for (var i = 0; i < _trailingBlankDays; i++)
+                            {
+                                <span class="hero-month-day is-empty"></span>
+                            }
+                        </div>
+                    </section>
+
+                    <a href="/events" class="hero-mini-event-card">
+                        <span class="hero-date-badge"><strong>JUN</strong><span>07</span></span>
+                        <span class="hero-mini-event-copy">
+                            <strong>Neighborhood Planting</strong>
+                            <small>9:00 AM &middot; Greenway Park</small>
+                        </span>
+                        <span class="hero-chevron" aria-hidden="true">&rsaquo;</span>
+                    </a>
+
+                    <div class="hero-stat-grid">
+                        <div class="hero-preview-card hero-mini-stat">
+                            <span class="hero-stat-icon" aria-hidden="true"></span>
+                            <strong>25+</strong>
+                            <span>Events this month</span>
+                            <span class="hero-stat-line"></span>
+                        </div>
+                        <div class="hero-preview-card hero-mini-stat">
+                            <span class="hero-stat-icon hero-stat-icon-purple" aria-hidden="true"></span>
+                            <strong>72%</strong>
+                            <span>Registrations</span>
+                            <span class="hero-stat-progress"><span></span></span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-4 mb-5">
+    <div class="col-md-6 col-xl-3">
+        <div class="card feature-card h-100">
+            <div class="card-body p-4">
+                <span class="feature-icon">01</span>
+                <h2 class="h5 mt-3">Upcoming Events</h2>
+                <p class="text-muted mb-0">Discover local events with dates, venues, activities, and capacity information.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card feature-card h-100">
+            <div class="card-body p-4">
+                <span class="feature-icon">02</span>
+                <h2 class="h5 mt-3">Smart Filtering</h2>
+                <p class="text-muted mb-0">Search by date, venue, activity, and activity type with clear filter controls.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card feature-card h-100">
+            <div class="card-body p-4">
+                <span class="feature-icon">03</span>
+                <h2 class="h5 mt-3">Simple Registration</h2>
+                <p class="text-muted mb-0">Participants can register, track status, and cancel eligible registrations.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card feature-card h-100">
+            <div class="card-body p-4">
+                <span class="feature-icon">04</span>
+                <h2 class="h5 mt-3">Admin Management</h2>
+                <p class="text-muted mb-0">Admins manage events, venues, activities, participants, and registration decisions.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <p class="page-kicker mb-2">Featured programme</p>
+            <h2 class="h3 mb-0">Upcoming community highlights</h2>
+        </div>
+        <a href="/events" class="btn btn-outline-primary">View all events</a>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-6 col-xl-4">
+            <div class="card event-card h-100">
+                <div class="event-visual event-visual-green"><span class="badge badge-green">Open</span></div>
+                <div class="card-body p-4">
+                    <div class="d-flex gap-3 mb-3">
+                        <div class="date-pill"><span>JUN</span><strong>18</strong></div>
+                        <div>
+                            <h3 class="h5 mb-1">Sunrise Yoga in the Park</h3>
+                            <p class="text-muted small mb-0">Greenwood Park | 07:00 - 08:30</p>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="activity-badge badge-green">Health</span>
+                        <span class="activity-badge badge-blue">Outdoors</span>
+                        <span class="activity-badge badge-purple">Wellness</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <div class="card event-card h-100">
+                <div class="event-visual event-visual-blue"><span class="badge badge-orange">Almost Full</span></div>
+                <div class="card-body p-4">
+                    <div class="d-flex gap-3 mb-3">
+                        <div class="date-pill"><span>JUN</span><strong>22</strong></div>
+                        <div>
+                            <h3 class="h5 mb-1">Outdoor Movie Night</h3>
+                            <p class="text-muted small mb-0">Central Community Lawn | 19:30 - 22:00</p>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="activity-badge badge-purple">Entertainment</span>
+                        <span class="activity-badge badge-green">Family</span>
+                        <span class="activity-badge badge-blue">Free</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <div class="card event-card h-100">
+                <div class="event-visual event-visual-purple"><span class="badge badge-green">Open</span></div>
+                <div class="card-body p-4">
+                    <div class="d-flex gap-3 mb-3">
+                        <div class="date-pill"><span>JUN</span><strong>27</strong></div>
+                        <div>
+                            <h3 class="h5 mb-1">Kids' Art Workshop</h3>
+                            <p class="text-muted small mb-0">Community Center | 10:00 - 12:00</p>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="activity-badge badge-orange">Kids</span>
+                        <span class="activity-badge badge-purple">Arts</span>
+                        <span class="activity-badge badge-blue">Workshop</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private bool _isAuthenticated;
+    private DateTime _today;
+    private DateTime _calendarMonth;
+    private int _daysInMonth;
+    private int _leadingBlankDays;
+    private int _trailingBlankDays;
+    private HashSet<int> _eventDays = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
+        InitialiseCalendar();
+    }
+
+    private void InitialiseCalendar()
+    {
+        _today = GetUkToday();
+        _calendarMonth = new DateTime(_today.Year, _today.Month, 1);
+        _daysInMonth = DateTime.DaysInMonth(_calendarMonth.Year, _calendarMonth.Month);
+        _leadingBlankDays = ((int)_calendarMonth.DayOfWeek + 6) % 7;
+        var calendarCells = _leadingBlankDays + _daysInMonth;
+        _trailingBlankDays = (7 - (calendarCells % 7)) % 7;
+        _eventDays = new HashSet<int>
+        {
+            Math.Min(_daysInMonth, 7),
+            Math.Min(_daysInMonth, 14),
+            Math.Min(_daysInMonth, 21),
+            _today.Day
+        };
+    }
+
+    private static DateTime GetUkToday()
+    {
+        try
+        {
+            var ukTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ukTimeZone);
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return DateTime.Now;
+        }
+        catch (InvalidTimeZoneException)
+        {
+            return DateTime.Now;
+        }
+    }
+}

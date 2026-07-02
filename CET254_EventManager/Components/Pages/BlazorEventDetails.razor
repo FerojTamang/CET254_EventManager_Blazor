@@ -1,3 +1,4 @@
+@page "/events/{Id:int}"
 @page "/blazor/events/{Id:int}"
 @inject IEventService EventService
 @inject IRegistrationService RegistrationService
@@ -6,19 +7,7 @@
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 
-<PageTitle>Blazor Event Details</PageTitle>
-
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-    <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Blazor event details</p>
-        <h1 class="mb-1">@(_eventItem?.Title ?? "Event Details")</h1>
-        <p class="text-muted mb-0">Read-only event information using the existing service layer.</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-outline-primary" href="/blazor/events">Back to Blazor Events</a>
-        <a class="btn btn-outline-secondary" href="/Events/Details/@Id">MVC Details</a>
-    </div>
-</div>
+<PageTitle>Event Details</PageTitle>
 
 @if (_isLoading)
 {
@@ -34,6 +23,10 @@ else if (!string.IsNullOrWhiteSpace(_errorMessage))
 }
 else if (_eventItem is not null)
 {
+    var isFull = GetCapacityRemaining(_eventItem).HasValue && GetCapacityRemaining(_eventItem) <= 0;
+    var statusText = _eventItem.EventDate.Date < DateTime.Today ? "Registration Closed" : isFull ? "Full" : "Registration Open";
+    var statusClass = _eventItem.EventDate.Date < DateTime.Today || isFull ? "badge-gray" : "badge-green";
+
     @if (!string.IsNullOrWhiteSpace(_successMessage))
     {
         <div class="alert alert-success" role="status">
@@ -47,90 +40,104 @@ else if (_eventItem is not null)
         </div>
     }
 
+    <section class="page-hero event-detail-hero">
+        <div class="d-flex gap-3 align-items-start">
+            <div class="date-pill date-pill-lg">
+                <span>@_eventItem.EventDate.ToString("MMM")</span>
+                <strong>@_eventItem.EventDate.Day</strong>
+            </div>
+            <div>
+                <p class="page-kicker">Event details</p>
+                <h1 class="mb-2">@_eventItem.Title</h1>
+                <p class="page-subtitle mb-0">@_eventItem.EventDate.ToString("D") | @FormatTimeShort(_eventItem.StartTime) - @FormatTimeShort(_eventItem.EndTime)</p>
+            </div>
+        </div>
+        <span class="status-badge @statusClass">@statusText</span>
+    </section>
+
     <div class="row g-4">
         <div class="col-lg-8">
-            <article class="card event-card h-100">
-                <div class="card-body">
-                    <h2 class="h4">@_eventItem.Title</h2>
-                    <p class="text-muted">@_eventItem.Description</p>
+            <article class="card event-details-card h-100">
+                <div class="event-visual event-visual-blue event-detail-visual"></div>
+                <div class="card-body p-4 p-lg-5">
+                    <h2 class="h4 mb-3">About this event</h2>
+                    <p class="lead text-muted mb-4">@_eventItem.Description</p>
 
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4 text-uppercase small text-muted">Date</dt>
-                        <dd class="col-sm-8">@_eventItem.EventDate.ToString("dddd, dd MMM yyyy")</dd>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="detail-mini-card">
+                                <div class="text-muted small">Date</div>
+                                <strong>@_eventItem.EventDate.ToString("D")</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-mini-card">
+                                <div class="text-muted small">Time</div>
+                                <strong>@FormatTimeShort(_eventItem.StartTime) - @FormatTimeShort(_eventItem.EndTime)</strong>
+                            </div>
+                        </div>
+                    </div>
 
-                        <dt class="col-sm-4 text-uppercase small text-muted">Start time</dt>
-                        <dd class="col-sm-8">@FormatTime(_eventItem.StartTime)</dd>
-
-                        <dt class="col-sm-4 text-uppercase small text-muted">End time</dt>
-                        <dd class="col-sm-8">@FormatTime(_eventItem.EndTime)</dd>
-
-                        <dt class="col-sm-4 text-uppercase small text-muted">Registration status</dt>
-                        <dd class="col-sm-8">
-                            @if (!_isAuthenticated)
+                    <div class="mb-4">
+                        <h2 class="h5 mb-3">Venues</h2>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var venue in GetVenues(_eventItem))
                             {
-                                <a class="btn btn-primary" href="@GetLoginUrl()">Login to Register</a>
+                                <span class="venue-chip">@venue.Name</span>
                             }
-                            else
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="h5 mb-3">Activities</h2>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var activity in GetActivities(_eventItem))
                             {
-                                <button type="button" class="btn btn-primary" disabled="@_isRegistering" @onclick="RegisterForEventAsync">
-                                    @(_isRegistering ? "Registering..." : "Register for Event")
-                                </button>
+                                <span class="activity-badge badge-purple">@activity.Name</span>
                             }
-                        </dd>
-                    </dl>
+                        </div>
+                    </div>
                 </div>
             </article>
         </div>
 
         <div class="col-lg-4">
-            <aside class="card h-100">
-                <div class="card-body">
-                    <h2 class="h5">Capacity</h2>
-                    <dl>
-                        <dt class="small text-uppercase text-muted">Confirmed registrations</dt>
-                        <dd>@GetConfirmedRegistrationCount(_eventItem)</dd>
+            <aside class="card action-panel sticky-lg-top">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Registration</h2>
+                    <div class="registration-meter mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Confirmed</span>
+                            <strong>@GetConfirmedRegistrationCount(_eventItem)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Capacity remaining</span>
+                            <strong>@GetCapacityRemainingText(_eventItem)</strong>
+                        </div>
+                    </div>
 
-                        <dt class="small text-uppercase text-muted">Capacity remaining</dt>
-                        <dd>@GetCapacityRemainingText(_eventItem)</dd>
-                    </dl>
-
-                    <h2 class="h5 mt-4">Venues</h2>
-                    @if (GetVenues(_eventItem).Count == 0)
+                    @if (_eventItem.EventDate.Date >= DateTime.Today && !isFull)
                     {
-                        <p class="text-muted mb-0">Venue to be confirmed.</p>
+                        @if (!_isAuthenticated)
+                        {
+                            <a class="btn btn-primary btn-lg w-100" href="@GetLoginUrl()">Login to Register</a>
+                        }
+                        else
+                        {
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary btn-lg" disabled="@_isRegistering" @onclick="RegisterForEventAsync">
+                                    @(_isRegistering ? "Registering..." : "Register for Event")
+                                </button>
+                            </div>
+                        }
                     }
                     else
                     {
-                        <ul class="list-unstyled mb-0">
-                            @foreach (var venue in GetVenues(_eventItem))
-                            {
-                                <li class="mb-3">
-                                    <div class="fw-semibold">@venue.Name</div>
-                                    <div class="text-muted">@venue.Address</div>
-                                    <div class="small text-muted">Capacity: @venue.Capacity</div>
-                                </li>
-                            }
-                        </ul>
+                        <div class="alert alert-secondary mb-0">Registration is not currently available for this event.</div>
                     }
 
-                    <h2 class="h5 mt-4">Activities</h2>
-                    @if (GetActivities(_eventItem).Count == 0)
-                    {
-                        <p class="text-muted mb-0">Activities to be confirmed.</p>
-                    }
-                    else
-                    {
-                        <ul class="list-unstyled mb-0">
-                            @foreach (var activity in GetActivities(_eventItem))
-                            {
-                                <li class="mb-3">
-                                    <div class="fw-semibold">@activity.Name</div>
-                                    <div class="small text-muted">@activity.ActivityType</div>
-                                    <div class="text-muted">@activity.Description</div>
-                                </li>
-                            }
-                        </ul>
-                    }
+                    <a href="/events" class="btn btn-outline-primary w-100 mt-3">Back to Events</a>
+                    <a href="/Events/Details/@Id" class="btn btn-link w-100 mt-2">MVC fallback</a>
                 </div>
             </aside>
         </div>
@@ -247,6 +254,11 @@ else if (_eventItem is not null)
         return DateTime.Today.Add(time).ToString("h:mm tt");
     }
 
+    private static string FormatTimeShort(TimeSpan time)
+    {
+        return time.ToString(@"hh\:mm");
+    }
+
     private static List<Venue> GetVenues(Event eventItem)
     {
         return eventItem.EventVenues
@@ -272,14 +284,12 @@ else if (_eventItem is not null)
 
     private static string GetCapacityRemainingText(Event eventItem)
     {
+        return GetCapacityRemaining(eventItem)?.ToString() ?? "Not limited";
+    }
+
+    private static int? GetCapacityRemaining(Event eventItem)
+    {
         var venues = GetVenues(eventItem);
-
-        if (venues.Count == 0)
-        {
-            return "Capacity to be confirmed";
-        }
-
-        var remaining = venues.Min(venue => venue.Capacity) - GetConfirmedRegistrationCount(eventItem);
-        return remaining.ToString();
+        return venues.Count == 0 ? null : venues.Min(venue => venue.Capacity) - GetConfirmedRegistrationCount(eventItem);
     }
 }

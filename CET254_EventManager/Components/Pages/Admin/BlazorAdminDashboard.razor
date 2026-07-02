@@ -1,3 +1,4 @@
+@page "/admin"
 @page "/blazor/admin"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @inject IAdminDashboardService AdminDashboardService
@@ -6,17 +7,14 @@
 
 <PageTitle>Blazor Admin Dashboard</PageTitle>
 
-<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+<section class="page-hero">
     <div>
-        <p class="text-uppercase text-muted fw-semibold mb-1">Administration</p>
-        <h1 class="mb-1">Admin Dashboard</h1>
-        <p class="text-muted mb-0">Review event and registration activity.</p>
+        <p class="page-kicker">Administration</p>
+        <h1 class="mb-2">Admin Dashboard</h1>
+        <p class="page-subtitle mb-0">Welcome back, Admin! Here's what's happening in your community.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-primary" href="/blazor/admin/registrations">Manage Registrations</a>
-        <a class="btn btn-outline-secondary" href="/Admin">MVC Admin Dashboard</a>
-    </div>
-</div>
+    <a class="btn btn-primary" href="/admin/events">Create Event</a>
+</section>
 
 @if (_isLoading)
 {
@@ -117,27 +115,27 @@ else if (_dashboard is not null)
                     <h2 class="h5 mb-0">Quick Actions</h2>
                 </div>
                 <div class="card-body quick-actions p-4">
-                    <a class="quick-action-card" href="/blazor/admin/events">
+                    <a class="quick-action-card" href="/admin/events">
                         <span class="quick-action-icon">E</span>
                         <span><strong>Events</strong><small>Create and manage the programme</small></span>
                     </a>
-                    <a class="quick-action-card" href="/blazor/admin/registrations">
+                    <a class="quick-action-card" href="/admin/registrations">
                         <span class="quick-action-icon">R</span>
                         <span><strong>Registrations</strong><small>Confirm or cancel participant requests</small></span>
                     </a>
-                    <a class="quick-action-card" href="/blazor/admin/participants">
+                    <a class="quick-action-card" href="/admin/participants">
                         <span class="quick-action-icon">P</span>
                         <span><strong>Participants</strong><small>Create and manage participant profiles</small></span>
                     </a>
-                    <a class="quick-action-card" href="/blazor/admin/venues">
+                    <a class="quick-action-card" href="/admin/venues">
                         <span class="quick-action-icon">V</span>
                         <span><strong>Venues</strong><small>Maintain locations and capacity</small></span>
                     </a>
-                    <a class="quick-action-card" href="/blazor/admin/activities">
+                    <a class="quick-action-card" href="/admin/activities">
                         <span class="quick-action-icon">A</span>
                         <span><strong>Activities</strong><small>Organize activity options</small></span>
                     </a>
-                    <a class="quick-action-card" href="/Admin">
+                    <a class="quick-action-card" href="/Admin/Index">
                         <span class="quick-action-icon">M</span>
                         <span><strong>MVC Admin</strong><small>Open the existing admin area</small></span>
                     </a>

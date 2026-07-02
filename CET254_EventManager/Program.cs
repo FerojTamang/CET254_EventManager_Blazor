@@ -37,6 +37,7 @@ namespace CET254_EventManager
             builder.Services.AddScoped<IParticipantService, ParticipantService>();
             builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
             builder.Services.AddControllersWithViews();
+            builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
