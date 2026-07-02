@@ -1,5 +1,10 @@
 @page "/blazor/events/{Id:int}"
 @inject IEventService EventService
+@inject IRegistrationService RegistrationService
+@inject IParticipantService ParticipantService
+@inject Microsoft.AspNetCore.Identity.UserManager<Microsoft.AspNetCore.Identity.IdentityUser> UserManager
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
 
 <PageTitle>Blazor Event Details</PageTitle>
 
@@ -29,6 +34,19 @@ else if (!string.IsNullOrWhiteSpace(_errorMessage))
 }
 else if (_eventItem is not null)
 {
+    @if (!string.IsNullOrWhiteSpace(_successMessage))
+    {
+        <div class="alert alert-success" role="status">
+            @_successMessage
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(_registrationErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @_registrationErrorMessage
+        </div>
+    }
+
     <div class="row g-4">
         <div class="col-lg-8">
             <article class="card event-card h-100">
@@ -47,7 +65,18 @@ else if (_eventItem is not null)
                         <dd class="col-sm-8">@FormatTime(_eventItem.EndTime)</dd>
 
                         <dt class="col-sm-4 text-uppercase small text-muted">Registration status</dt>
-                        <dd class="col-sm-8">Registration will be added in the next Blazor stage.</dd>
+                        <dd class="col-sm-8">
+                            @if (!_isAuthenticated)
+                            {
+                                <a class="btn btn-primary" href="@GetLoginUrl()">Login to Register</a>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-primary" disabled="@_isRegistering" @onclick="RegisterForEventAsync">
+                                    @(_isRegistering ? "Registering..." : "Register for Event")
+                                </button>
+                            }
+                        </dd>
                     </dl>
                 </div>
             </article>
@@ -114,16 +143,23 @@ else if (_eventItem is not null)
 
     private Event? _eventItem;
     private bool _isLoading = true;
+    private bool _isAuthenticated;
+    private bool _isRegistering;
     private string? _errorMessage;
+    private string? _registrationErrorMessage;
+    private string? _successMessage;
 
     protected override async Task OnParametersSetAsync()
     {
         _isLoading = true;
         _errorMessage = null;
+        _registrationErrorMessage = null;
+        _successMessage = null;
 
         try
         {
-            _eventItem = await EventService.GetEventDetailsAsync(Id);
+            await LoadAuthenticationStateAsync();
+            await LoadEventDetailsAsync();
         }
         catch
         {
@@ -134,6 +170,76 @@ else if (_eventItem is not null)
         {
             _isLoading = false;
         }
+    }
+
+    private async Task LoadAuthenticationStateAsync()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
+    }
+
+    private async Task LoadEventDetailsAsync()
+    {
+        _eventItem = await EventService.GetEventDetailsAsync(Id);
+    }
+
+    private async Task RegisterForEventAsync()
+    {
+        _registrationErrorMessage = null;
+        _successMessage = null;
+        _isRegistering = true;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authenticationState.User);
+
+            if (user is null)
+            {
+                _isAuthenticated = false;
+                _registrationErrorMessage = "Please log in before registering for this event.";
+                return;
+            }
+
+            var participant = await GetOrCreateParticipantAsync(user);
+            await RegistrationService.RegisterAsync(Id, participant.Id);
+            await LoadEventDetailsAsync();
+            _successMessage = "Registration submitted successfully.";
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _registrationErrorMessage = ex.Message;
+        }
+        catch
+        {
+            _registrationErrorMessage = "Unable to complete registration right now.";
+        }
+        finally
+        {
+            _isRegistering = false;
+        }
+    }
+
+    private async Task<Participant> GetOrCreateParticipantAsync(Microsoft.AspNetCore.Identity.IdentityUser user)
+    {
+        var participant = await ParticipantService.GetParticipantByApplicationUserIdAsync(user.Id);
+
+        if (participant is not null)
+        {
+            return participant;
+        }
+
+        var email = user.Email ?? user.UserName ?? "user@eventmanager.local";
+        var fullName = email.Contains('@') ? email.Split('@')[0] : email;
+        var newParticipant = new Participant(fullName, email, string.Empty, user.Id);
+
+        return await ParticipantService.CreateParticipantAsync(newParticipant);
+    }
+
+    private string GetLoginUrl()
+    {
+        var returnUrl = new Uri(NavigationManager.Uri).PathAndQuery;
+        return $"/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
     }
 
     private static string FormatTime(TimeSpan time)
