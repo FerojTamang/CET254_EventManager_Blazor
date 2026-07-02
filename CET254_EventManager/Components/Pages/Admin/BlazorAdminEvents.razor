@@ -1,0 +1,746 @@
+@page "/blazor/admin/events"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Components.Forms
+@inject IEventService EventService
+@inject IVenueService VenueService
+@inject IActivityService ActivityService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Blazor Admin Events</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+        <p class="text-uppercase text-muted fw-semibold mb-1">Admin management</p>
+        <h1 class="mb-1">Events</h1>
+        <p class="text-muted mb-0">Create, review, and maintain the community programme.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Event</button>
+        <a class="btn btn-outline-primary" href="/blazor/admin">Blazor Admin Dashboard</a>
+        <a class="btn btn-outline-secondary" href="/AdminEvents">MVC Events</a>
+    </div>
+</div>
+
+@if (_isLoading)
+{
+    <div class="alert alert-info" role="status">
+        Loading events...
+    </div>
+}
+else if (!_isAuthenticated)
+{
+    <div class="alert alert-warning" role="alert">
+        Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to manage events.
+    </div>
+}
+else if (!_isAdmin)
+{
+    <div class="alert alert-danger" role="alert">
+        You do not have permission to manage events.
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(_successMessage))
+    {
+        <div class="alert alert-success" role="status">
+            @_successMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @_errorMessage
+        </div>
+    }
+
+    @if (_mode == PageMode.Create)
+    {
+        <div class="card form-card mb-4">
+            <div class="card-header p-4">
+                <h2 class="h5 mb-0">Create Event</h2>
+            </div>
+            <EditForm Model="_createModel" OnValidSubmit="CreateEventAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger px-4 pt-3" />
+                <div class="card-body p-4">
+                    @CreateFormFields()
+                    @AssignmentFields(_createModel.SelectedVenueIds, _createModel.SelectedActivityIds)
+                </div>
+                <div class="card-footer p-4">
+                    <button type="submit" class="btn btn-primary" disabled="@_isSaving">@(_isSaving ? "Creating..." : "Create")</button>
+                    <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+    else if (_mode == PageMode.Edit)
+    {
+        <div class="card form-card mb-4">
+            <div class="card-header p-4">
+                <h2 class="h5 mb-0">Edit Event</h2>
+            </div>
+            <EditForm Model="_editModel" OnValidSubmit="UpdateEventAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger px-4 pt-3" />
+                <div class="card-body p-4">
+                    @EditFormFields()
+                    @AssignmentFields(_editModel.SelectedVenueIds, _editModel.SelectedActivityIds)
+                </div>
+                <div class="card-footer p-4">
+                    <button type="submit" class="btn btn-primary" disabled="@_isSaving">@(_isSaving ? "Saving..." : "Save")</button>
+                    <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+    else if (_mode == PageMode.Details && _selectedEvent is not null)
+    {
+        <div class="card mb-4">
+            <div class="card-header p-4 d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h2 class="h4 mb-1">@_selectedEvent.Title</h2>
+                    <p class="text-muted mb-0">@_selectedEvent.EventDate.ToString("D") at @FormatTime(_selectedEvent.StartTime) - @FormatTime(_selectedEvent.EndTime)</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ClearSelection">Close</button>
+            </div>
+            <div class="card-body p-4">
+                <p>@_selectedEvent.Description</p>
+                <dl class="row detail-list">
+                    <dt class="col-sm-3">Date</dt><dd class="col-sm-9">@_selectedEvent.EventDate.ToString("D")</dd>
+                    <dt class="col-sm-3">Time</dt><dd class="col-sm-9">@FormatTime(_selectedEvent.StartTime) - @FormatTime(_selectedEvent.EndTime)</dd>
+                    <dt class="col-sm-3">Venues</dt><dd class="col-sm-9">@VenueBadges(_selectedEvent)</dd>
+                    <dt class="col-sm-3">Activities</dt><dd class="col-sm-9">@ActivityBadges(_selectedEvent)</dd>
+                    <dt class="col-sm-3">Registrations</dt><dd class="col-sm-9">@_selectedEvent.Registrations.Count</dd>
+                    <dt class="col-sm-3">Confirmed</dt><dd class="col-sm-9">@GetConfirmedRegistrationCount(_selectedEvent)</dd>
+                    <dt class="col-sm-3">Capacity Remaining</dt><dd class="col-sm-9">@GetCapacityRemainingText(_selectedEvent)</dd>
+                </dl>
+
+                @if (_selectedEvent.Registrations.Count == 0)
+                {
+                    <p class="text-muted mb-0">This event has no registrations.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Registration Date</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var registration in _selectedEvent.Registrations.OrderByDescending(registration => registration.RegistrationDate))
+                                {
+                                    <tr>
+                                        <td>@registration.RegistrationDate.ToString("g")</td>
+                                        <td><span class="status-badge @GetStatusBadgeClass(registration.Status)">@registration.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+            <div class="card-footer p-4">
+                <button type="button" class="btn btn-warning" @onclick="() => ShowEditFormAsync(_selectedEvent.Id)">Edit</button>
+                <button type="button" class="btn btn-danger" @onclick="() => ShowDeleteConfirmationAsync(_selectedEvent.Id)">Delete</button>
+            </div>
+        </div>
+    }
+    else if (_mode == PageMode.Delete && _selectedEvent is not null)
+    {
+        <div class="card mb-4">
+            <div class="card-header p-4">
+                <h2 class="h5 mb-0">Delete Event</h2>
+            </div>
+            <div class="card-body p-4">
+                @if (_selectedEvent.Registrations.Any())
+                {
+                    <div class="alert alert-warning">
+                        This event has @_selectedEvent.Registrations.Count registration(s). Deletion will be blocked by the existing service rule.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger">
+                        Are you sure you want to delete this event?
+                    </div>
+                }
+
+                <h3 class="h5">@_selectedEvent.Title</h3>
+                <p class="mb-1">@_selectedEvent.EventDate.ToString("D")</p>
+                <p class="text-muted mb-0">@_selectedEvent.Description</p>
+            </div>
+            <div class="card-footer p-4">
+                <button type="button" class="btn btn-danger" disabled="@_isSaving" @onclick="DeleteEventAsync">@(_isSaving ? "Deleting..." : "Delete")</button>
+                <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
+            </div>
+        </div>
+    }
+
+    @if (_events.Count == 0)
+    {
+        <div class="empty-state">
+            <h2 class="h4">No upcoming events</h2>
+            <p class="text-muted mb-3">Create an event to add it to the programme.</p>
+            <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Event</button>
+        </div>
+    }
+    else
+    {
+        <div class="card admin-table-card">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Title</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Time</th>
+                            <th scope="col">Venues</th>
+                            <th scope="col">Activities</th>
+                            <th scope="col">Registrations</th>
+                            <th scope="col" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var eventItem in _events)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@eventItem.Title</td>
+                                <td><span class="badge badge-blue">@eventItem.EventDate.ToString("d")</span></td>
+                                <td>@FormatTime(eventItem.StartTime) - @FormatTime(eventItem.EndTime)</td>
+                                <td>@GetVenueSummary(eventItem)</td>
+                                <td>@GetActivitySummary(eventItem)</td>
+                                <td>@eventItem.Registrations.Count</td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-primary" @onclick="() => ShowDetailsAsync(eventItem.Id)">Details</button>
+                                        <button type="button" class="btn btn-warning" @onclick="() => ShowEditFormAsync(eventItem.Id)">Edit</button>
+                                        <button type="button" class="btn btn-danger" @onclick="() => ShowDeleteConfirmationAsync(eventItem.Id)">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private enum PageMode
+    {
+        List,
+        Create,
+        Edit,
+        Details,
+        Delete
+    }
+
+    private List<Event> _events = new();
+    private List<Venue> _venues = new();
+    private List<Models.Activity> _activities = new();
+    private EventCreateViewModel _createModel = CreateDefaultModel();
+    private EventEditViewModel _editModel = new();
+    private Event? _selectedEvent;
+    private PageMode _mode = PageMode.List;
+    private bool _isLoading = true;
+    private bool _isAuthenticated;
+    private bool _isAdmin;
+    private bool _isSaving;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPageAsync();
+    }
+
+    private RenderFragment CreateFormFields() => @<div>
+        <div class="mb-3">
+            <label for="createTitle" class="form-label">Title</label>
+            <InputText id="createTitle" class="form-control" @bind-Value="_createModel.Title" />
+            <ValidationMessage For="@(() => _createModel.Title)" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="createDescription" class="form-label">Description</label>
+            <InputTextArea id="createDescription" class="form-control" rows="4" @bind-Value="_createModel.Description" />
+            <ValidationMessage For="@(() => _createModel.Description)" class="text-danger" />
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="createEventDate" class="form-label">Event date</label>
+                <InputDate id="createEventDate" class="form-control" @bind-Value="_createModel.EventDate" />
+                <ValidationMessage For="@(() => _createModel.EventDate)" class="text-danger" />
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="createStartTime" class="form-label">Start time</label>
+                <input id="createStartTime" type="time" class="form-control" value="@FormatTimeInput(_createModel.StartTime)" @onchange="SetCreateStartTime" />
+                <ValidationMessage For="@(() => _createModel.StartTime)" class="text-danger" />
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="createEndTime" class="form-label">End time</label>
+                <input id="createEndTime" type="time" class="form-control" value="@FormatTimeInput(_createModel.EndTime)" @onchange="SetCreateEndTime" />
+                <ValidationMessage For="@(() => _createModel.EndTime)" class="text-danger" />
+            </div>
+        </div>
+    </div>;
+
+    private RenderFragment EditFormFields() => @<div>
+        <div class="mb-3">
+            <label for="editTitle" class="form-label">Title</label>
+            <InputText id="editTitle" class="form-control" @bind-Value="_editModel.Title" />
+            <ValidationMessage For="@(() => _editModel.Title)" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="editDescription" class="form-label">Description</label>
+            <InputTextArea id="editDescription" class="form-control" rows="4" @bind-Value="_editModel.Description" />
+            <ValidationMessage For="@(() => _editModel.Description)" class="text-danger" />
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="editEventDate" class="form-label">Event date</label>
+                <InputDate id="editEventDate" class="form-control" @bind-Value="_editModel.EventDate" />
+                <ValidationMessage For="@(() => _editModel.EventDate)" class="text-danger" />
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="editStartTime" class="form-label">Start time</label>
+                <input id="editStartTime" type="time" class="form-control" value="@FormatTimeInput(_editModel.StartTime)" @onchange="SetEditStartTime" />
+                <ValidationMessage For="@(() => _editModel.StartTime)" class="text-danger" />
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="editEndTime" class="form-label">End time</label>
+                <input id="editEndTime" type="time" class="form-control" value="@FormatTimeInput(_editModel.EndTime)" @onchange="SetEditEndTime" />
+                <ValidationMessage For="@(() => _editModel.EndTime)" class="text-danger" />
+            </div>
+        </div>
+    </div>;
+
+    private RenderFragment AssignmentFields(List<int> selectedVenueIds, List<int> selectedActivityIds) => @<div class="row">
+        <div class="col-md-6">
+            <div class="choice-panel h-100">
+                <h2 class="h5">Venues</h2>
+                @if (_venues.Count == 0)
+                {
+                    <p class="text-muted mb-0">No venues are available.</p>
+                }
+                else
+                {
+                    @foreach (var venue in _venues)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="@($"venue_{venue.Id}_{_mode}")" checked="@selectedVenueIds.Contains(venue.Id)" @onchange="args => ToggleSelection(selectedVenueIds, venue.Id, args)" />
+                            <label class="form-check-label" for="@($"venue_{venue.Id}_{_mode}")">@venue.Name</label>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="choice-panel h-100">
+                <h2 class="h5">Activities</h2>
+                @if (_activities.Count == 0)
+                {
+                    <p class="text-muted mb-0">No activities are available.</p>
+                }
+                else
+                {
+                    @foreach (var activity in _activities)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="@($"activity_{activity.Id}_{_mode}")" checked="@selectedActivityIds.Contains(activity.Id)" @onchange="args => ToggleSelection(selectedActivityIds, activity.Id, args)" />
+                            <label class="form-check-label" for="@($"activity_{activity.Id}_{_mode}")">@activity.Name <span class="badge badge-purple">@activity.ActivityType</span></label>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>;
+
+    private async Task LoadPageAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
+            _isAdmin = authenticationState.User.IsInRole("Admin");
+
+            if (!_isAuthenticated || !_isAdmin)
+            {
+                _events.Clear();
+                return;
+            }
+
+            await LoadOptionsAsync();
+            await LoadEventsAsync();
+        }
+        catch
+        {
+            _events.Clear();
+            _errorMessage = "Unable to load events right now.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task LoadOptionsAsync()
+    {
+        _venues = await VenueService.GetAllVenuesAsync();
+        _activities = await ActivityService.GetAllActivitiesAsync();
+    }
+
+    private async Task LoadEventsAsync()
+    {
+        var eventSummaries = await EventService.GetUpcomingEventsAsync();
+        _events = new List<Event>();
+
+        foreach (var eventSummary in eventSummaries)
+        {
+            _events.Add(await EventService.GetEventDetailsAsync(eventSummary.Id));
+        }
+    }
+
+    private void ShowCreateForm()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _selectedEvent = null;
+        _createModel = CreateDefaultModel();
+        _mode = PageMode.Create;
+    }
+
+    private async Task ShowEditFormAsync(int eventId)
+    {
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            _selectedEvent = await EventService.GetEventDetailsAsync(eventId);
+            _editModel = new EventEditViewModel
+            {
+                Id = _selectedEvent.Id,
+                Title = _selectedEvent.Title,
+                Description = _selectedEvent.Description,
+                EventDate = _selectedEvent.EventDate,
+                StartTime = _selectedEvent.StartTime,
+                EndTime = _selectedEvent.EndTime,
+                SelectedVenueIds = _selectedEvent.EventVenues.Select(eventVenue => eventVenue.VenueId).ToList(),
+                SelectedActivityIds = _selectedEvent.EventActivities.Select(eventActivity => eventActivity.ActivityId).ToList()
+            };
+            _mode = PageMode.Edit;
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to load this event right now.";
+        }
+    }
+
+    private async Task ShowDetailsAsync(int eventId)
+    {
+        await SelectEventAsync(eventId, PageMode.Details);
+    }
+
+    private async Task ShowDeleteConfirmationAsync(int eventId)
+    {
+        await SelectEventAsync(eventId, PageMode.Delete);
+    }
+
+    private async Task SelectEventAsync(int eventId, PageMode mode)
+    {
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            _selectedEvent = await EventService.GetEventDetailsAsync(eventId);
+            _mode = mode;
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to load this event right now.";
+        }
+    }
+
+    private async Task CreateEventAsync()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _isSaving = true;
+
+        try
+        {
+            var eventItem = new Event(_createModel.Title, _createModel.Description, _createModel.EventDate, _createModel.StartTime, _createModel.EndTime);
+            await EventService.CreateEventAsync(eventItem, _createModel.SelectedVenueIds, _createModel.SelectedActivityIds);
+            _successMessage = "Event created successfully.";
+            await LoadEventsAsync();
+            ClearSelection();
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to create this event right now.";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task UpdateEventAsync()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _isSaving = true;
+
+        try
+        {
+            var eventItem = await EventService.GetEventDetailsAsync(_editModel.Id);
+            eventItem.UpdateDetails(_editModel.Title, _editModel.Description, _editModel.EventDate, _editModel.StartTime, _editModel.EndTime);
+            await EventService.UpdateEventAsync(eventItem, _editModel.SelectedVenueIds, _editModel.SelectedActivityIds);
+            _successMessage = "Event updated successfully.";
+            await LoadEventsAsync();
+            ClearSelection();
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to update this event right now.";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task DeleteEventAsync()
+    {
+        if (_selectedEvent is null)
+        {
+            _errorMessage = "Unable to find this event.";
+            return;
+        }
+
+        _errorMessage = null;
+        _successMessage = null;
+        _isSaving = true;
+
+        try
+        {
+            await EventService.DeleteEventAsync(_selectedEvent.Id);
+            _successMessage = "Event deleted successfully.";
+            await LoadEventsAsync();
+            ClearSelection();
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to delete this event right now.";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void ClearSelection()
+    {
+        _mode = PageMode.List;
+        _selectedEvent = null;
+        _createModel = CreateDefaultModel();
+        _editModel = new EventEditViewModel();
+    }
+
+    private void SetCreateStartTime(ChangeEventArgs args)
+    {
+        _createModel.StartTime = ParseTime(args.Value, _createModel.StartTime);
+    }
+
+    private void SetCreateEndTime(ChangeEventArgs args)
+    {
+        _createModel.EndTime = ParseTime(args.Value, _createModel.EndTime);
+    }
+
+    private void SetEditStartTime(ChangeEventArgs args)
+    {
+        _editModel.StartTime = ParseTime(args.Value, _editModel.StartTime);
+    }
+
+    private void SetEditEndTime(ChangeEventArgs args)
+    {
+        _editModel.EndTime = ParseTime(args.Value, _editModel.EndTime);
+    }
+
+    private static void ToggleSelection(List<int> selectedIds, int id, ChangeEventArgs args)
+    {
+        var isSelected = args.Value is bool value && value;
+
+        if (isSelected && !selectedIds.Contains(id))
+        {
+            selectedIds.Add(id);
+        }
+        else if (!isSelected)
+        {
+            selectedIds.Remove(id);
+        }
+    }
+
+    private string GetLoginUrl()
+    {
+        var returnUrl = new Uri(NavigationManager.Uri).PathAndQuery;
+        return $"/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+
+    private static EventCreateViewModel CreateDefaultModel()
+    {
+        return new EventCreateViewModel
+        {
+            EventDate = DateTime.Today.AddDays(1),
+            StartTime = TimeSpan.FromHours(10),
+            EndTime = TimeSpan.FromHours(17)
+        };
+    }
+
+    private static TimeSpan ParseTime(object? value, TimeSpan fallback)
+    {
+        return TimeSpan.TryParse(value?.ToString(), out var parsedTime) ? parsedTime : fallback;
+    }
+
+    private static string FormatTimeInput(TimeSpan time)
+    {
+        return time.ToString(@"hh\:mm");
+    }
+
+    private static string FormatTime(TimeSpan time)
+    {
+        return DateTime.Today.Add(time).ToString("h:mm tt");
+    }
+
+    private static string GetVenueSummary(Event eventItem)
+    {
+        var venues = eventItem.EventVenues
+            .Where(eventVenue => eventVenue.Venue is not null)
+            .Select(eventVenue => eventVenue.Venue.Name)
+            .Distinct()
+            .ToList();
+
+        return venues.Count == 0 ? "Venue to be confirmed" : string.Join(", ", venues);
+    }
+
+    private static string GetActivitySummary(Event eventItem)
+    {
+        var activities = eventItem.EventActivities
+            .Where(eventActivity => eventActivity.Activity is not null)
+            .Select(eventActivity => eventActivity.Activity.Name)
+            .Distinct()
+            .ToList();
+
+        return activities.Count == 0 ? "Activities to be confirmed" : string.Join(", ", activities);
+    }
+
+    private static RenderFragment VenueBadges(Event eventItem) => builder =>
+    {
+        var venues = eventItem.EventVenues
+            .Where(eventVenue => eventVenue.Venue is not null)
+            .Select(eventVenue => eventVenue.Venue.Name)
+            .Distinct()
+            .ToList();
+
+        if (venues.Count == 0)
+        {
+            builder.AddContent(0, "Venue to be confirmed");
+            return;
+        }
+
+        var sequence = 1;
+        foreach (var venue in venues)
+        {
+            builder.OpenElement(sequence++, "span");
+            builder.AddAttribute(sequence++, "class", "badge badge-gray me-1");
+            builder.AddContent(sequence++, venue);
+            builder.CloseElement();
+        }
+    };
+
+    private static RenderFragment ActivityBadges(Event eventItem) => builder =>
+    {
+        var activities = eventItem.EventActivities
+            .Where(eventActivity => eventActivity.Activity is not null)
+            .Select(eventActivity => eventActivity.Activity.Name)
+            .Distinct()
+            .ToList();
+
+        if (activities.Count == 0)
+        {
+            builder.AddContent(0, "Activities to be confirmed");
+            return;
+        }
+
+        var sequence = 1;
+        foreach (var activity in activities)
+        {
+            builder.OpenElement(sequence++, "span");
+            builder.AddAttribute(sequence++, "class", "badge badge-purple me-1");
+            builder.AddContent(sequence++, activity);
+            builder.CloseElement();
+        }
+    };
+
+    private static int GetConfirmedRegistrationCount(Event eventItem)
+    {
+        return eventItem.Registrations.Count(registration => registration.Status == RegistrationStatus.Confirmed);
+    }
+
+    private static string GetCapacityRemainingText(Event eventItem)
+    {
+        var venueCapacities = eventItem.EventVenues
+            .Where(eventVenue => eventVenue.Venue is not null)
+            .Select(eventVenue => eventVenue.Venue.Capacity)
+            .ToList();
+
+        if (venueCapacities.Count == 0)
+        {
+            return "Not limited";
+        }
+
+        return (venueCapacities.Min() - GetConfirmedRegistrationCount(eventItem)).ToString();
+    }
+
+    private static string GetStatusBadgeClass(RegistrationStatus status)
+    {
+        return status switch
+        {
+            RegistrationStatus.Pending => "badge-orange",
+            RegistrationStatus.Confirmed => "badge-green",
+            RegistrationStatus.Cancelled => "badge-gray",
+            _ => "badge-blue"
+        };
+    }
+}
