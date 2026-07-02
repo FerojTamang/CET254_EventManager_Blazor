@@ -15,7 +15,7 @@
                 var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
             }
             <div class="container">
-                <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
+                <a class="navbar-brand d-flex align-items-center gap-2" href="/">
                     <span class="brand-mark">CE</span>
                     <span>Community Events</span>
                 </a>
@@ -26,18 +26,15 @@
                 <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1 gap-lg-1">
                         <li class="nav-item">
-                            <a class="nav-link @(currentController == "Home" ? "active" : string.Empty)" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link @(currentController == "Home" ? "active" : string.Empty)" href="/">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link @(currentController == "Events" ? "active" : string.Empty)" asp-area="" asp-controller="Events" asp-action="Index">Events</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/blazor/events">Blazor Events</a>
+                            <a class="nav-link @(currentController == "Events" ? "active" : string.Empty)" href="/events">Events</a>
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
-                                <a class="nav-link @(currentController == "MyRegistrations" ? "active" : string.Empty)" asp-area="" asp-controller="MyRegistrations" asp-action="Index">My Registrations</a>
+                                <a class="nav-link @(currentController == "MyRegistrations" ? "active" : string.Empty)" href="/my-registrations">My Registrations</a>
                             </li>
                         }
                         @if (User.IsInRole("Admin"))
@@ -47,12 +44,12 @@
                                     Admin
                                 </a>
                                 <ul class="dropdown-menu border-0 shadow" aria-labelledby="adminMenu">
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Index">Dashboard</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminEvents" asp-action="Index">Events</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminVenues" asp-action="Index">Venues</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminActivities" asp-action="Index">Activities</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminParticipants" asp-action="Index">Participants</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="AdminRegistrations" asp-action="Index">Registrations</a></li>
+                                    <li><a class="dropdown-item" href="/admin">Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="/admin/events">Events</a></li>
+                                    <li><a class="dropdown-item" href="/admin/venues">Venues</a></li>
+                                    <li><a class="dropdown-item" href="/admin/activities">Activities</a></li>
+                                    <li><a class="dropdown-item" href="/admin/participants">Participants</a></li>
+                                    <li><a class="dropdown-item" href="/admin/registrations">Registrations</a></li>
                                 </ul>
                             </li>
                         }
