@@ -1,0 +1,187 @@
+@page "/blazor/admin"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@inject IAdminDashboardService AdminDashboardService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Blazor Admin Dashboard</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+        <p class="text-uppercase text-muted fw-semibold mb-1">Administration</p>
+        <h1 class="mb-1">Admin Dashboard</h1>
+        <p class="text-muted mb-0">Review event and registration activity.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-primary" href="/blazor/admin/registrations">Manage Registrations</a>
+        <a class="btn btn-outline-secondary" href="/Admin">MVC Admin Dashboard</a>
+    </div>
+</div>
+
+@if (_isLoading)
+{
+    <div class="alert alert-info" role="status">
+        Loading admin dashboard...
+    </div>
+}
+else if (!_isAuthenticated)
+{
+    <div class="alert alert-warning" role="alert">
+        Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to view this page.
+    </div>
+}
+else if (!_isAdmin)
+{
+    <div class="alert alert-danger" role="alert">
+        You do not have permission to view the admin dashboard.
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @_errorMessage
+    </div>
+}
+else if (_dashboard is not null)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="dashboard-stat-card"><span class="stat-icon">E</span><div><div class="text-muted small">Total Events</div><strong>@_dashboard.TotalEvents</strong><small>Published programme</small></div></div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="dashboard-stat-card"><span class="stat-icon">P</span><div><div class="text-muted small">Total Participants</div><strong>@_dashboard.TotalParticipants</strong><small>Registered users</small></div></div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="dashboard-stat-card"><span class="stat-icon">R</span><div><div class="text-muted small">Total Registrations</div><strong>@TotalRegistrations</strong><small>All statuses</small></div></div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="dashboard-stat-card"><span class="stat-icon">V</span><div><div class="text-muted small">Total Venues</div><strong>@_dashboard.TotalVenues</strong><small>Available spaces</small></div></div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-orange">P</span><div><div class="text-muted small">Pending Registrations</div><strong>@_dashboard.PendingRegistrations</strong></div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-green">C</span><div><div class="text-muted small">Confirmed Registrations</div><strong>@_dashboard.ConfirmedRegistrations</strong></div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-stat-card dashboard-stat-card-compact"><span class="stat-icon stat-icon-gray">X</span><div><div class="text-muted small">Cancelled Registrations</div><strong>@_dashboard.CancelledRegistrations</strong></div></div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card admin-table-card h-100">
+                <div class="card-header p-4">
+                    <h2 class="h5 mb-0">Recent Registrations</h2>
+                </div>
+                @if (_dashboard.RecentRegistrations.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Event</th>
+                                    <th scope="col">Participant</th>
+                                    <th scope="col">Registered</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var registration in _dashboard.RecentRegistrations)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@registration.EventTitle</td>
+                                        <td>@registration.ParticipantName</td>
+                                        <td>@registration.RegistrationDate.ToString("g")</td>
+                                        <td><span class="status-badge @GetStatusBadgeClass(registration.Status)">@registration.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="card-body p-4">
+                        <p class="mb-0 text-muted">No registrations yet.</p>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header p-4">
+                    <h2 class="h5 mb-0">Quick Actions</h2>
+                </div>
+                <div class="card-body quick-actions p-4">
+                    <a class="quick-action-card" href="/blazor/admin/registrations">
+                        <span class="quick-action-icon">R</span>
+                        <span><strong>Registrations</strong><small>Confirm or cancel participant requests</small></span>
+                    </a>
+                    <a class="quick-action-card" href="/Admin">
+                        <span class="quick-action-icon">M</span>
+                        <span><strong>MVC Admin</strong><small>Open the existing admin area</small></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private AdminDashboardViewModel? _dashboard;
+    private bool _isLoading = true;
+    private bool _isAuthenticated;
+    private bool _isAdmin;
+    private string? _errorMessage;
+
+    private int TotalRegistrations =>
+        (_dashboard?.PendingRegistrations ?? 0)
+        + (_dashboard?.ConfirmedRegistrations ?? 0)
+        + (_dashboard?.CancelledRegistrations ?? 0);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
+            _isAdmin = authenticationState.User.IsInRole("Admin");
+
+            if (!_isAuthenticated || !_isAdmin)
+            {
+                return;
+            }
+
+            _dashboard = await AdminDashboardService.GetDashboardAsync();
+        }
+        catch
+        {
+            _errorMessage = "Unable to load the admin dashboard right now.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetLoginUrl()
+    {
+        var returnUrl = new Uri(NavigationManager.Uri).PathAndQuery;
+        return $"/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+
+    private static string GetStatusBadgeClass(RegistrationStatus status)
+    {
+        return status switch
+        {
+            RegistrationStatus.Pending => "badge-orange",
+            RegistrationStatus.Confirmed => "badge-green",
+            RegistrationStatus.Cancelled => "badge-gray",
+            _ => "badge-blue"
+        };
+    }
+}

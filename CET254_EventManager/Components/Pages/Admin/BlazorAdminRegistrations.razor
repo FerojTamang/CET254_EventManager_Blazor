@@ -1,0 +1,288 @@
+@page "/blazor/admin/registrations"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@inject IRegistrationService RegistrationService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Blazor Admin Registrations</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+        <p class="text-uppercase text-muted fw-semibold mb-1">Admin management</p>
+        <h1 class="mb-1">Registrations</h1>
+        <p class="text-muted mb-0">Review participant requests and update registration status.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-primary" href="/blazor/admin">Blazor Admin Dashboard</a>
+        <a class="btn btn-outline-secondary" href="/AdminRegistrations">MVC Registrations</a>
+    </div>
+</div>
+
+@if (_isLoading)
+{
+    <div class="alert alert-info" role="status">
+        Loading registrations...
+    </div>
+}
+else if (!_isAuthenticated)
+{
+    <div class="alert alert-warning" role="alert">
+        Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to manage registrations.
+    </div>
+}
+else if (!_isAdmin)
+{
+    <div class="alert alert-danger" role="alert">
+        You do not have permission to manage registrations.
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(_successMessage))
+    {
+        <div class="alert alert-success" role="status">
+            @_successMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @_errorMessage
+        </div>
+    }
+
+    @if (_registrations.Count == 0)
+    {
+        <div class="alert alert-secondary" role="status">
+            No registrations are available.
+        </div>
+    }
+    else
+    {
+        <div class="card admin-table-card">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Participant</th>
+                            <th scope="col">Event</th>
+                            <th scope="col">Event Date</th>
+                            <th scope="col">Event Time</th>
+                            <th scope="col">Registered</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var registration in _registrations)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@GetParticipantName(registration)</div>
+                                    <div class="small text-muted">@GetParticipantEmail(registration)</div>
+                                </td>
+                                <td class="fw-semibold">@GetEventTitle(registration)</td>
+                                <td>@FormatEventDate(registration)</td>
+                                <td>@FormatEventTime(registration)</td>
+                                <td>@registration.RegistrationDate.ToString("g")</td>
+                                <td><span class="status-badge @GetStatusBadgeClass(registration.Status)">@registration.Status</span></td>
+                                <td class="text-end">
+                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+                                        @if (CanConfirm(registration))
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-primary"
+                                                    disabled="@IsProcessing(registration)"
+                                                    @onclick="() => ConfirmRegistrationAsync(registration.Id)">
+                                                @(IsProcessing(registration) ? "Working..." : "Confirm")
+                                            </button>
+                                        }
+                                        @if (CanCancel(registration))
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-danger"
+                                                    disabled="@IsProcessing(registration)"
+                                                    @onclick="() => CancelRegistrationAsync(registration.Id)">
+                                                @(IsProcessing(registration) ? "Working..." : "Cancel")
+                                            </button>
+                                        }
+                                        @if (!CanConfirm(registration) && !CanCancel(registration))
+                                        {
+                                            <span class="text-muted small">No actions available</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<Registration> _registrations = new();
+    private bool _isLoading = true;
+    private bool _isAuthenticated;
+    private bool _isAdmin;
+    private int? _processingRegistrationId;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPageAsync();
+    }
+
+    private async Task LoadPageAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
+            _isAdmin = authenticationState.User.IsInRole("Admin");
+
+            if (!_isAuthenticated || !_isAdmin)
+            {
+                _registrations.Clear();
+                return;
+            }
+
+            await LoadRegistrationsAsync();
+        }
+        catch
+        {
+            _registrations.Clear();
+            _errorMessage = "Unable to load registrations right now.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task LoadRegistrationsAsync()
+    {
+        _registrations = await RegistrationService.GetRecentRegistrationsAsync(100);
+    }
+
+    private async Task ConfirmRegistrationAsync(int registrationId)
+    {
+        await RunRegistrationActionAsync(
+            registrationId,
+            () => RegistrationService.ConfirmRegistrationAsync(registrationId),
+            "Registration confirmed.",
+            "Unable to confirm this registration right now.");
+    }
+
+    private async Task CancelRegistrationAsync(int registrationId)
+    {
+        await RunRegistrationActionAsync(
+            registrationId,
+            () => RegistrationService.CancelRegistrationByAdminAsync(registrationId),
+            "Registration cancelled.",
+            "Unable to cancel this registration right now.");
+    }
+
+    private async Task RunRegistrationActionAsync(
+        int registrationId,
+        Func<Task> action,
+        string successMessage,
+        string fallbackErrorMessage)
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _processingRegistrationId = registrationId;
+
+        try
+        {
+            await action();
+            _successMessage = successMessage;
+            await LoadRegistrationsAsync();
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = fallbackErrorMessage;
+        }
+        finally
+        {
+            _processingRegistrationId = null;
+        }
+    }
+
+    private string GetLoginUrl()
+    {
+        var returnUrl = new Uri(NavigationManager.Uri).PathAndQuery;
+        return $"/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+
+    private static bool CanConfirm(Registration registration)
+    {
+        return registration.Status == RegistrationStatus.Pending;
+    }
+
+    private static bool CanCancel(Registration registration)
+    {
+        return registration.Status == RegistrationStatus.Pending
+            || registration.Status == RegistrationStatus.Confirmed;
+    }
+
+    private bool IsProcessing(Registration registration)
+    {
+        return _processingRegistrationId == registration.Id;
+    }
+
+    private static string GetParticipantName(Registration registration)
+    {
+        return registration.Participant?.FullName ?? "Participant unavailable";
+    }
+
+    private static string GetParticipantEmail(Registration registration)
+    {
+        return registration.Participant?.Email ?? "Email unavailable";
+    }
+
+    private static string GetEventTitle(Registration registration)
+    {
+        return registration.Event?.Title ?? "Event unavailable";
+    }
+
+    private static string FormatEventDate(Registration registration)
+    {
+        return registration.Event is null
+            ? "Date unavailable"
+            : registration.Event.EventDate.ToString("dddd, dd MMM yyyy");
+    }
+
+    private static string FormatEventTime(Registration registration)
+    {
+        return registration.Event is null
+            ? "Time unavailable"
+            : $"{FormatTime(registration.Event.StartTime)} - {FormatTime(registration.Event.EndTime)}";
+    }
+
+    private static string FormatTime(TimeSpan time)
+    {
+        return DateTime.Today.Add(time).ToString("h:mm tt");
+    }
+
+    private static string GetStatusBadgeClass(RegistrationStatus status)
+    {
+        return status switch
+        {
+            RegistrationStatus.Pending => "badge-orange",
+            RegistrationStatus.Confirmed => "badge-green",
+            RegistrationStatus.Cancelled => "badge-gray",
+            _ => "badge-blue"
+        };
+    }
+}
