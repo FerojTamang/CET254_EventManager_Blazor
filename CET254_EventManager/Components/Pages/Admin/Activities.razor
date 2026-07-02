@@ -7,204 +7,337 @@
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 
-<PageTitle>Blazor Admin Activities</PageTitle>
+<PageTitle>Admin Activities</PageTitle>
 
-<div class="admin-shell">
+<div class="admin-app-shell">
     <AdminSidebar />
-    <main class="admin-shell-content">
-<section class="page-hero">
-    <div>
-        <p class="page-kicker">Admin management</p>
-        <h1 class="mb-2">Activities</h1>
-        <p class="page-subtitle mb-0">Manage activity labels and descriptions used by events.</p>
-    </div>
-    <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create New</button>
-</section>
 
-@if (_isLoading)
-{
-    <div class="alert alert-info" role="status">
-        Loading activities...
-    </div>
-}
-else if (!_isAuthenticated)
-{
-    <div class="alert alert-warning" role="alert">
-        Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to manage activities.
-    </div>
-}
-else if (!_isAdmin)
-{
-    <div class="alert alert-danger" role="alert">
-        You do not have permission to manage activities.
-    </div>
-}
-else
-{
-    @if (!string.IsNullOrWhiteSpace(_successMessage))
-    {
-        <div class="alert alert-success" role="status">
-            @_successMessage
-        </div>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(_errorMessage))
-    {
-        <div class="alert alert-danger" role="alert">
-            @_errorMessage
-        </div>
-    }
-
-    @if (_mode == PageMode.Create)
-    {
-        <section class="page-banner">
-            <p class="page-kicker">Admin management</p>
-            <h1 class="mb-2">Create Activity</h1>
-            <p class="page-subtitle mb-0">Add a new activity type for event planning.</p>
-        </section>
-        <div class="card form-card mb-4">
-            <div class="card-header p-4">
-                <h2 class="h5 mb-0">Create Activity</h2>
+    <main class="admin-app-main">
+        <div class="admin-topbar">
+            <div>
+                <span class="admin-section-kicker">Admin</span>
+                <h1>Activities</h1>
             </div>
-            <EditForm Model="_formModel" OnValidSubmit="CreateActivityAsync">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger px-4 pt-3" />
-                <div class="card-body p-4">
-                    @ActivityFormFields()
-                </div>
-                <div class="card-footer p-4">
-                    <button type="submit" class="btn btn-primary" disabled="@_isSaving">@(_isSaving ? "Creating..." : "Create")</button>
-                    <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
-                </div>
-            </EditForm>
-        </div>
-    }
-    else if (_mode == PageMode.Edit)
-    {
-        <section class="page-banner">
-            <p class="page-kicker">Admin management</p>
-            <h1 class="mb-2">Edit Activity</h1>
-            <p class="page-subtitle mb-0">Update activity details used across events.</p>
-        </section>
-        <div class="card form-card mb-4">
-            <div class="card-header p-4">
-                <h2 class="h5 mb-0">Edit Activity</h2>
-            </div>
-            <EditForm Model="_formModel" OnValidSubmit="UpdateActivityAsync">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger px-4 pt-3" />
-                <div class="card-body p-4">
-                    @ActivityFormFields()
-                </div>
-                <div class="card-footer p-4">
-                    <button type="submit" class="btn btn-primary" disabled="@_isSaving">@(_isSaving ? "Saving..." : "Save")</button>
-                    <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
-                </div>
-            </EditForm>
-        </div>
-    }
-    else if (_mode == PageMode.Details && _selectedActivity is not null)
-    {
-        <div class="card mb-4">
-            <div class="card-header p-4 d-flex justify-content-between align-items-start flex-wrap gap-2">
+
+            <input class="admin-search-box"
+                   placeholder="Search activities, type, description..."
+                   aria-label="Search admin activities" />
+
+            <div class="admin-profile-box">
+                <span class="admin-profile-avatar">
+                    @SvgIcon("user")
+                </span>
                 <div>
-                    <h2 class="h4 mb-1">@_selectedActivity.Name</h2>
-                    <span class="badge badge-purple">@_selectedActivity.ActivityType</span>
+                    <strong>Administrator</strong>
+                    <small>Admin area</small>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ClearSelection">Close</button>
-            </div>
-            <div class="card-body p-4">
-                <dl class="row detail-list">
-                    <dt class="col-sm-3">Type</dt><dd class="col-sm-9">@_selectedActivity.ActivityType</dd>
-                    <dt class="col-sm-3">Description</dt><dd class="col-sm-9">@GetDescriptionText(_selectedActivity)</dd>
-                    <dt class="col-sm-3">Assigned Events</dt><dd class="col-sm-9">@GetAssignedEventCount(_selectedActivity.Id)</dd>
-                </dl>
-                @AssignedEventsTable(_selectedActivity.Id)
-            </div>
-            <div class="card-footer p-4">
-                <button type="button" class="btn btn-warning" @onclick="() => ShowEditForm(_selectedActivity.Id)">Edit</button>
-                <button type="button" class="btn btn-danger" @onclick="() => ShowDeleteConfirmation(_selectedActivity.Id)">Delete</button>
             </div>
         </div>
-    }
-    else if (_mode == PageMode.Delete && _selectedActivity is not null)
-    {
-        <section class="page-banner">
-            <p class="page-kicker">Admin management</p>
-            <h1 class="mb-2">Delete Activity</h1>
-            <p class="page-subtitle mb-0">Review this activity before deletion.</p>
-        </section>
-        <div class="card mb-4">
-            <div class="card-body p-4">
-                @if (GetAssignedEventCount(_selectedActivity.Id) > 0)
+
+        <div class="admin-dashboard-content admin-management-page">
+            <section class="admin-management-hero">
+                <div>
+                    <span class="admin-management-icon">
+                        @SvgIcon("activity")
+                    </span>
+                    <p class="admin-management-kicker">Admin management</p>
+                    <h2>Activities</h2>
+                    <p>Manage workshops, talks, games, and activity records used across community events.</p>
+                </div>
+
+                <div class="admin-management-hero-actions">
+                    <button type="button" class="btn btn-light" @onclick="ShowCreateForm">
+                        <span class="btn-symbol">@SvgIcon("activity")</span>
+                        Create Activity
+                    </button>
+                    <a class="btn btn-outline-light" href="/admin">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </section>
+
+            @if (_isLoading)
+            {
+                <div class="alert alert-info" role="status">
+                    Loading activities...
+                </div>
+            }
+            else if (!_isAuthenticated)
+            {
+                <div class="alert alert-warning" role="alert">
+                    Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to manage activities.
+                </div>
+            }
+            else if (!_isAdmin)
+            {
+                <div class="alert alert-danger" role="alert">
+                    You do not have permission to manage activities.
+                </div>
+            }
+            else
+            {
+                @if (!string.IsNullOrWhiteSpace(_successMessage))
                 {
-                    <div class="alert alert-warning">
-                        This activity is assigned to @GetAssignedEventCount(_selectedActivity.Id) event(s). Deletion will be blocked by the existing service rule.
+                    <div class="alert alert-success" role="status">
+                        @_successMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @_errorMessage
+                    </div>
+                }
+
+                <section class="admin-management-stats">
+                    <article class="admin-management-stat">
+                        <span>@SvgIcon("activity")</span>
+                        <div>
+                            <strong>@_activities.Count</strong>
+                            <small>Total activities</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-management-stat">
+                        <span>@SvgIcon("event")</span>
+                        <div>
+                            <strong>@GetTotalAssignedEvents()</strong>
+                            <small>Assigned events</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-management-stat">
+                        <span>@SvgIcon("type")</span>
+                        <div>
+                            <strong>@GetActivityTypeCount()</strong>
+                            <small>Activity types</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-management-stat">
+                        <span>@SvgIcon("available")</span>
+                        <div>
+                            <strong>@GetUnassignedActivityCount()</strong>
+                            <small>Unassigned activities</small>
+                        </div>
+                    </article>
+                </section>
+
+                @if (_mode == PageMode.Create)
+                {
+                    <section class="admin-panel-card admin-management-form-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Create</span>
+                                <h2>Create Activity</h2>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ClearSelection">Close</button>
+                        </div>
+
+                        <EditForm Model="_formModel" OnValidSubmit="CreateActivityAsync">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger mb-3" />
+
+                            <div class="admin-form-grid">
+                                @ActivityFormFields()
+                            </div>
+
+                            <div class="admin-form-actions">
+                                <button type="submit" class="btn btn-primary" disabled="@_isSaving">
+                                    @(_isSaving ? "Creating..." : "Create Activity")
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">
+                                    Cancel
+                                </button>
+                            </div>
+                        </EditForm>
+                    </section>
+                }
+                else if (_mode == PageMode.Edit)
+                {
+                    <section class="admin-panel-card admin-management-form-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Edit</span>
+                                <h2>Edit Activity</h2>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ClearSelection">Close</button>
+                        </div>
+
+                        <EditForm Model="_formModel" OnValidSubmit="UpdateActivityAsync">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger mb-3" />
+
+                            <div class="admin-form-grid">
+                                @ActivityFormFields()
+                            </div>
+
+                            <div class="admin-form-actions">
+                                <button type="submit" class="btn btn-primary" disabled="@_isSaving">
+                                    @(_isSaving ? "Saving..." : "Save Changes")
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">
+                                    Cancel
+                                </button>
+                            </div>
+                        </EditForm>
+                    </section>
+                }
+                else if (_mode == PageMode.Details && _selectedActivity is not null)
+                {
+                    <section class="admin-panel-card admin-management-detail-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Details</span>
+                                <h2>@_selectedActivity.Name</h2>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ClearSelection">Close</button>
+                        </div>
+
+                        <div class="admin-detail-summary">
+                            <div>
+                                <span>@SvgIcon("activity")</span>
+                                <strong>@_selectedActivity.Name</strong>
+                                <small>Activity name</small>
+                            </div>
+                            <div>
+                                <span>@SvgIcon("type")</span>
+                                <strong>@_selectedActivity.ActivityType</strong>
+                                <small>Activity type</small>
+                            </div>
+                            <div>
+                                <span>@SvgIcon("description")</span>
+                                <strong>Description</strong>
+                                <small>@GetDescriptionText(_selectedActivity)</small>
+                            </div>
+                            <div>
+                                <span>@SvgIcon("event")</span>
+                                <strong>@GetAssignedEventCount(_selectedActivity.Id)</strong>
+                                <small>Assigned events</small>
+                            </div>
+                        </div>
+
+                        @AssignedEventsTable(_selectedActivity.Id)
+
+                        <div class="admin-form-actions">
+                            <button type="button" class="btn btn-warning" @onclick="() => ShowEditForm(_selectedActivity.Id)">Edit</button>
+                            <button type="button" class="btn btn-danger" @onclick="() => ShowDeleteConfirmation(_selectedActivity.Id)">Delete</button>
+                        </div>
+                    </section>
+                }
+                else if (_mode == PageMode.Delete && _selectedActivity is not null)
+                {
+                    <section class="admin-panel-card admin-management-form-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Delete</span>
+                                <h2>Delete Activity</h2>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ClearSelection">Close</button>
+                        </div>
+
+                        @if (GetAssignedEventCount(_selectedActivity.Id) > 0)
+                        {
+                            <div class="alert alert-warning">
+                                This activity is assigned to @GetAssignedEventCount(_selectedActivity.Id) event(s). Deletion will be blocked by the existing service rule.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-danger">
+                                Are you sure you want to delete this activity?
+                            </div>
+                        }
+
+                        <div class="admin-delete-preview">
+                            <span>@SvgIcon("activity")</span>
+                            <div>
+                                <strong>@_selectedActivity.Name</strong>
+                                <small>@_selectedActivity.ActivityType</small>
+                                <p>@GetDescriptionText(_selectedActivity)</p>
+                            </div>
+                        </div>
+
+                        <div class="admin-form-actions">
+                            <button type="button" class="btn btn-danger" disabled="@_isSaving" @onclick="DeleteActivityAsync">
+                                @(_isSaving ? "Deleting..." : "Delete Activity")
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">
+                                Cancel
+                            </button>
+                        </div>
+                    </section>
+                }
+
+                @if (_activities.Count == 0)
+                {
+                    <div class="admin-empty-state">
+                        <strong>No activities yet</strong>
+                        <span>Create the first activity to make it available for events.</span>
+                        <button type="button" class="btn btn-primary mt-3" @onclick="ShowCreateForm">Create Activity</button>
                     </div>
                 }
                 else
                 {
-                    <div class="alert alert-danger">
-                        Are you sure you want to delete this activity?
-                    </div>
+                    <section class="admin-panel-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Activities</span>
+                                <h2>Activity List</h2>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="ShowCreateForm">
+                                Create Activity
+                            </button>
+                        </div>
+
+                        <div class="admin-table-modern">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Activity</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Description</th>
+                                        <th scope="col">Assigned Events</th>
+                                        <th scope="col" class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var activity in _activities)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="admin-table-title-cell">
+                                                    <span>@SvgIcon("activity")</span>
+                                                    <div>
+                                                        <strong>@activity.Name</strong>
+                                                        <small>Event activity</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-purple">@activity.ActivityType</span>
+                                            </td>
+                                            <td>@GetDescriptionText(activity)</td>
+                                            <td>
+                                                <span class="badge badge-blue">@GetAssignedEventCount(activity.Id)</span>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="admin-action-buttons">
+                                                    <button type="button" class="btn btn-sm btn-primary" @onclick="() => ShowDetails(activity.Id)">Details</button>
+                                                    <button type="button" class="btn btn-sm btn-warning" @onclick="() => ShowEditForm(activity.Id)">Edit</button>
+                                                    <button type="button" class="btn btn-sm btn-danger" @onclick="() => ShowDeleteConfirmation(activity.Id)">Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 }
-                <h3 class="h5">@_selectedActivity.Name</h3>
-                <p class="mb-1">@_selectedActivity.ActivityType</p>
-                <p class="text-muted mb-0">@GetDescriptionText(_selectedActivity)</p>
-            </div>
-            <div class="card-footer p-4">
-                <button type="button" class="btn btn-danger" disabled="@_isSaving" @onclick="DeleteActivityAsync">@(_isSaving ? "Deleting..." : "Delete")</button>
-                <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
-            </div>
+            }
         </div>
-    }
-
-    @if (_activities.Count == 0)
-    {
-        <div class="empty-state">
-            <h2 class="h4">No activities yet</h2>
-            <p class="text-muted mb-3">Create the first activity to make it available for events.</p>
-            <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Activity</button>
-        </div>
-    }
-    else
-    {
-        <div class="card admin-table-card">
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th scope="col">Name</th>
-                            <th scope="col">Type</th>
-                            <th scope="col">Description</th>
-                            <th scope="col">Assigned Events</th>
-                            <th scope="col" class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var activity in _activities)
-                        {
-                            <tr>
-                                <td class="fw-semibold">@activity.Name</td>
-                                <td><span class="badge badge-purple">@activity.ActivityType</span></td>
-                                <td>@GetDescriptionText(activity)</td>
-                                <td>@GetAssignedEventCount(activity.Id)</td>
-                                <td class="text-end">
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-primary" @onclick="() => ShowDetails(activity.Id)">Details</button>
-                                        <button type="button" class="btn btn-warning" @onclick="() => ShowEditForm(activity.Id)">Edit</button>
-                                        <button type="button" class="btn btn-danger" @onclick="() => ShowDeleteConfirmation(activity.Id)">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
-}
-
     </main>
 </div>
 
@@ -242,6 +375,7 @@ else
             <InputText id="activityName" class="form-control" @bind-Value="_formModel.Name" />
             <ValidationMessage For="@(() => _formModel.Name)" class="text-danger" />
         </div>
+
         <div class="mb-3">
             <label for="activityType" class="form-label">Type</label>
             <InputSelect id="activityType" class="form-select" @bind-Value="_formModel.ActivityType">
@@ -252,6 +386,7 @@ else
             </InputSelect>
             <ValidationMessage For="@(() => _formModel.ActivityType)" class="text-danger" />
         </div>
+
         <div class="mb-3">
             <label for="activityDescription" class="form-label">Description</label>
             <InputTextArea id="activityDescription" class="form-control" rows="4" @bind-Value="_formModel.Description" />
@@ -471,6 +606,24 @@ else
         return _assignedEventsByActivityId.TryGetValue(activityId, out var events) ? events.Count : 0;
     }
 
+    private int GetTotalAssignedEvents()
+    {
+        return _assignedEventsByActivityId.Values.Sum(events => events.Count);
+    }
+
+    private int GetUnassignedActivityCount()
+    {
+        return _activities.Count(activity => GetAssignedEventCount(activity.Id) == 0);
+    }
+
+    private int GetActivityTypeCount()
+    {
+        return _activities
+            .Select(activity => activity.ActivityType)
+            .Distinct()
+            .Count();
+    }
+
     private RenderFragment AssignedEventsTable(int activityId) => builder =>
     {
         var assignedEvents = _assignedEventsByActivityId.TryGetValue(activityId, out var events)
@@ -479,34 +632,43 @@ else
 
         if (assignedEvents.Count == 0)
         {
-            builder.OpenElement(0, "p");
-            builder.AddAttribute(1, "class", "text-muted mb-0");
-            builder.AddContent(2, "This activity is not assigned to any upcoming events.");
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "class", "admin-empty-state");
+            builder.OpenElement(2, "strong");
+            builder.AddContent(3, "No assigned events.");
+            builder.CloseElement();
+            builder.OpenElement(4, "span");
+            builder.AddContent(5, "This activity is not assigned to any upcoming events.");
+            builder.CloseElement();
             builder.CloseElement();
             return;
         }
 
-        builder.OpenElement(3, "div");
-        builder.AddAttribute(4, "class", "table-responsive");
-        builder.OpenElement(5, "table");
-        builder.AddAttribute(6, "class", "table align-middle");
-        builder.AddMarkupContent(7, "<thead><tr><th scope=\"col\">Event</th><th scope=\"col\">Date</th><th scope=\"col\">Time</th></tr></thead>");
-        builder.OpenElement(8, "tbody");
+        builder.OpenElement(6, "div");
+        builder.AddAttribute(7, "class", "admin-table-modern");
+        builder.OpenElement(8, "table");
+        builder.AddAttribute(9, "class", "table align-middle");
+        builder.AddMarkupContent(10, "<thead><tr><th scope=\"col\">Event</th><th scope=\"col\">Date</th><th scope=\"col\">Time</th></tr></thead>");
+        builder.OpenElement(11, "tbody");
 
-        var sequence = 9;
+        var sequence = 12;
         foreach (var eventItem in assignedEvents)
         {
             builder.OpenElement(sequence++, "tr");
+
             builder.OpenElement(sequence++, "td");
             builder.AddAttribute(sequence++, "class", "fw-semibold");
             builder.AddContent(sequence++, eventItem.Title);
             builder.CloseElement();
+
             builder.OpenElement(sequence++, "td");
-            builder.AddContent(sequence++, eventItem.EventDate.ToString("d"));
+            builder.AddContent(sequence++, eventItem.EventDate.ToString("dd MMM yyyy"));
             builder.CloseElement();
+
             builder.OpenElement(sequence++, "td");
             builder.AddContent(sequence++, $"{FormatTime(eventItem.StartTime)} - {FormatTime(eventItem.EndTime)}");
             builder.CloseElement();
+
             builder.CloseElement();
         }
 
@@ -535,4 +697,35 @@ else
     {
         return DateTime.Today.Add(time).ToString("h:mm tt");
     }
+
+    private RenderFragment SvgIcon(string name) => name switch
+    {
+        "activity" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M13 4a2 2 0 1 1 4 0 2 2 0 0 1-4 0ZM7 22l2.5-6.2L7 13.5l-2 3.2-2-1.2 3-5 4.2 2.4 1.5-4.2-2.7-.8.7-2.2 5.8 1.8-2.2 6.2 3.2 3.3 3.7-1.3.8 2.2-4.8 1.7-4.2-4.2L9.3 22H7Z" />
+        </svg>,
+
+        "event" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 2v3M17 2v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 6h3v3H8v-3Zm5 0h3v3h-3v-3Z" />
+        </svg>,
+
+        "type" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z" />
+        </svg>,
+
+        "description" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 3h14a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm3 5h8V6H8v2Zm0 4h8v-2H8v2Zm0 4h5v-2H8v2Z" />
+        </svg>,
+
+        "available" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9.2 16.6 4.9 12.3l1.7-1.7 2.6 2.6 8.2-8.2 1.7 1.7-9.9 9.9Z" />
+        </svg>,
+
+        "user" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.4-8 5.3V22h16v-2.7C20 16.4 16.4 14 12 14Z" />
+        </svg>,
+
+        _ => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" />
+        </svg>
+    };
 }

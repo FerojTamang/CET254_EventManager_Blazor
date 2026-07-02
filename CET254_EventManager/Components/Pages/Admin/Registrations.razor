@@ -5,123 +5,230 @@
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 
-<PageTitle>Blazor Admin Registrations</PageTitle>
+<PageTitle>Admin Registrations</PageTitle>
 
-<div class="admin-shell">
+<div class="admin-app-shell">
     <AdminSidebar />
-    <main class="admin-shell-content">
-<section class="page-hero">
-    <div>
-        <p class="page-kicker">Admin management</p>
-        <h1 class="mb-2">Registrations</h1>
-        <p class="page-subtitle mb-0">Review participant requests and update registration status.</p>
-    </div>
-</section>
 
-@if (_isLoading)
-{
-    <div class="alert alert-info" role="status">
-        Loading registrations...
-    </div>
-}
-else if (!_isAuthenticated)
-{
-    <div class="alert alert-warning" role="alert">
-        Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to manage registrations.
-    </div>
-}
-else if (!_isAdmin)
-{
-    <div class="alert alert-danger" role="alert">
-        You do not have permission to manage registrations.
-    </div>
-}
-else
-{
-    @if (!string.IsNullOrWhiteSpace(_successMessage))
-    {
-        <div class="alert alert-success" role="status">
-            @_successMessage
-        </div>
-    }
+    <main class="admin-app-main">
+        <div class="admin-topbar">
+            <div>
+                <span class="admin-section-kicker">Admin</span>
+                <h1>Registrations</h1>
+            </div>
 
-    @if (!string.IsNullOrWhiteSpace(_errorMessage))
-    {
-        <div class="alert alert-danger" role="alert">
-            @_errorMessage
-        </div>
-    }
+            <input class="admin-search-box"
+                   placeholder="Search registrations, participants, events..."
+                   aria-label="Search admin registrations" />
 
-    @if (_registrations.Count == 0)
-    {
-        <div class="alert alert-secondary" role="status">
-            No registrations are available.
-        </div>
-    }
-    else
-    {
-        <div class="card admin-table-card">
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th scope="col">Participant</th>
-                            <th scope="col">Event</th>
-                            <th scope="col">Event Date</th>
-                            <th scope="col">Event Time</th>
-                            <th scope="col">Registered</th>
-                            <th scope="col">Status</th>
-                            <th scope="col" class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var registration in _registrations)
-                        {
-                            <tr>
-                                <td>
-                                    <div class="fw-semibold">@GetParticipantName(registration)</div>
-                                    <div class="small text-muted">@GetParticipantEmail(registration)</div>
-                                </td>
-                                <td class="fw-semibold">@GetEventTitle(registration)</td>
-                                <td>@FormatEventDate(registration)</td>
-                                <td>@FormatEventTime(registration)</td>
-                                <td>@registration.RegistrationDate.ToString("g")</td>
-                                <td><span class="status-badge @GetStatusBadgeClass(registration.Status)">@registration.Status</span></td>
-                                <td class="text-end">
-                                    <div class="d-flex flex-wrap justify-content-end gap-2">
-                                        @if (CanConfirm(registration))
-                                        {
-                                            <button type="button"
-                                                    class="btn btn-sm btn-primary"
-                                                    disabled="@IsProcessing(registration)"
-                                                    @onclick="() => ConfirmRegistrationAsync(registration.Id)">
-                                                @(IsProcessing(registration) ? "Working..." : "Confirm")
-                                            </button>
-                                        }
-                                        @if (CanCancel(registration))
-                                        {
-                                            <button type="button"
-                                                    class="btn btn-sm btn-danger"
-                                                    disabled="@IsProcessing(registration)"
-                                                    @onclick="() => CancelRegistrationAsync(registration.Id)">
-                                                @(IsProcessing(registration) ? "Working..." : "Cancel")
-                                            </button>
-                                        }
-                                        @if (!CanConfirm(registration) && !CanCancel(registration))
-                                        {
-                                            <span class="text-muted small">No actions available</span>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+            <div class="admin-profile-box">
+                <span class="admin-profile-avatar">
+                    @SvgIcon("user")
+                </span>
+                <div>
+                    <strong>Administrator</strong>
+                    <small>Admin area</small>
+                </div>
             </div>
         </div>
-    }
-}
 
+        <div class="admin-dashboard-content admin-management-page">
+            <section class="admin-management-hero">
+                <div>
+                    <span class="admin-management-icon">
+                        @SvgIcon("registration")
+                    </span>
+                    <p class="admin-management-kicker">Admin management</p>
+                    <h2>Registrations</h2>
+                    <p>Review participant requests, confirm valid registrations, and cancel records when required.</p>
+                </div>
+
+                <div class="admin-management-hero-actions">
+                    <a class="btn btn-light" href="/admin">
+                        Back to Dashboard
+                    </a>
+                    <a class="btn btn-outline-light" href="/events">
+                        View Events
+                    </a>
+                </div>
+            </section>
+
+            @if (_isLoading)
+            {
+                <div class="alert alert-info" role="status">
+                    Loading registrations...
+                </div>
+            }
+            else if (!_isAuthenticated)
+            {
+                <div class="alert alert-warning" role="alert">
+                    Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to manage registrations.
+                </div>
+            }
+            else if (!_isAdmin)
+            {
+                <div class="alert alert-danger" role="alert">
+                    You do not have permission to manage registrations.
+                </div>
+            }
+            else
+            {
+                @if (!string.IsNullOrWhiteSpace(_successMessage))
+                {
+                    <div class="alert alert-success" role="status">
+                        @_successMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @_errorMessage
+                    </div>
+                }
+
+                <section class="admin-management-stats">
+                    <article class="admin-management-stat">
+                        <span>@SvgIcon("registration")</span>
+                        <div>
+                            <strong>@_registrations.Count</strong>
+                            <small>Total registrations</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-management-stat">
+                        <span>@SvgIcon("pending")</span>
+                        <div>
+                            <strong>@GetStatusCount(RegistrationStatus.Pending)</strong>
+                            <small>Pending review</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-management-stat">
+                        <span>@SvgIcon("confirmed")</span>
+                        <div>
+                            <strong>@GetStatusCount(RegistrationStatus.Confirmed)</strong>
+                            <small>Confirmed</small>
+                        </div>
+                    </article>
+
+                    <article class="admin-management-stat">
+                        <span>@SvgIcon("cancelled")</span>
+                        <div>
+                            <strong>@GetStatusCount(RegistrationStatus.Cancelled)</strong>
+                            <small>Cancelled</small>
+                        </div>
+                    </article>
+                </section>
+
+                @if (_registrations.Count == 0)
+                {
+                    <div class="admin-empty-state">
+                        <strong>No registrations are available.</strong>
+                        <span>New participant registrations will appear here.</span>
+                    </div>
+                }
+                else
+                {
+                    <section class="admin-panel-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Requests</span>
+                                <h2>Registration List</h2>
+                            </div>
+                            <a class="btn btn-sm btn-outline-primary" href="/admin">Dashboard</a>
+                        </div>
+
+                        <div class="admin-table-modern">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Participant</th>
+                                        <th scope="col">Event</th>
+                                        <th scope="col">Event Schedule</th>
+                                        <th scope="col">Registered</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col" class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var registration in _registrations)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="admin-registration-person">
+                                                    <span class="admin-registration-avatar">
+                                                        @SvgIcon("user")
+                                                    </span>
+                                                    <div>
+                                                        <strong>@GetParticipantName(registration)</strong>
+                                                        <small>@GetParticipantEmail(registration)</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <div class="admin-table-title-cell">
+                                                    <span>@SvgIcon("event")</span>
+                                                    <div>
+                                                        <strong>@GetEventTitle(registration)</strong>
+                                                        <small>Community event</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <div>
+                                                    <strong>@FormatEventDate(registration)</strong>
+                                                    <small class="d-block text-muted">@FormatEventTime(registration)</small>
+                                                </div>
+                                            </td>
+
+                                            <td>@registration.RegistrationDate.ToString("dd MMM yyyy, h:mm tt")</td>
+
+                                            <td>
+                                                <span class="status-badge @GetStatusBadgeClass(registration.Status)">
+                                                    @registration.Status
+                                                </span>
+                                            </td>
+
+                                            <td class="text-end">
+                                                <div class="admin-action-buttons">
+                                                    @if (CanConfirm(registration))
+                                                    {
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-primary"
+                                                                disabled="@IsProcessing(registration)"
+                                                                @onclick="() => ConfirmRegistrationAsync(registration.Id)">
+                                                            @(IsProcessing(registration) ? "Working..." : "Confirm")
+                                                        </button>
+                                                    }
+
+                                                    @if (CanCancel(registration))
+                                                    {
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-danger"
+                                                                disabled="@IsProcessing(registration)"
+                                                                @onclick="() => CancelRegistrationAsync(registration.Id)">
+                                                            @(IsProcessing(registration) ? "Working..." : "Cancel")
+                                                        </button>
+                                                    }
+
+                                                    @if (!CanConfirm(registration) && !CanCancel(registration))
+                                                    {
+                                                        <span class="text-muted small">No actions available</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                }
+            }
+        </div>
     </main>
 </div>
 
@@ -228,6 +335,11 @@ else
         return $"/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
     }
 
+    private int GetStatusCount(RegistrationStatus status)
+    {
+        return _registrations.Count(registration => registration.Status == status);
+    }
+
     private static bool CanConfirm(Registration registration)
     {
         return registration.Status == RegistrationStatus.Pending;
@@ -288,4 +400,35 @@ else
             _ => "badge-blue"
         };
     }
+
+    private RenderFragment SvgIcon(string name) => name switch
+    {
+        "event" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 2v3M17 2v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 6h3v3H8v-3Zm5 0h3v3h-3v-3Z" />
+        </svg>,
+
+        "registration" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 3h8l1 2h2a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2l1-2Zm1 4h6M8 11h8M8 15h8M8 19h5" />
+        </svg>,
+
+        "user" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.4-8 5.3V22h16v-2.7C20 16.4 16.4 14 12 14Z" />
+        </svg>,
+
+        "pending" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5h-2v6l5 3 1-1.7-4-2.3V7Z" />
+        </svg>,
+
+        "confirmed" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9.2 16.6 4.9 12.3l1.7-1.7 2.6 2.6 8.2-8.2 1.7 1.7-9.9 9.9Z" />
+        </svg>,
+
+        "cancelled" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6.4 5 12.6 12.6-1.4 1.4L5 6.4 6.4 5Zm11.2 0L19 6.4 6.4 19 5 17.6 17.6 5Z" />
+        </svg>,
+
+        _ => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" />
+        </svg>
+    };
 }
