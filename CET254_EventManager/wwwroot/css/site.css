@@ -3984,3 +3984,23 @@ a {
         margin-left: 0;
         margin-right: 0;
     }
+
+/* Stronger action-column fix */
+.admin-table-modern .table {
+    min-width: 1150px;
+}
+
+.admin-table-modern th:last-child,
+.admin-table-modern td:last-child {
+    width: 210px;
+    min-width: 210px;
+    white-space: nowrap;
+}
+
+.admin-action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    flex-wrap: nowrap;
+}
