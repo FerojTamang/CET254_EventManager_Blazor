@@ -4004,3 +4004,233 @@ a {
     gap: 0.45rem;
     flex-wrap: nowrap;
 }
+/* Event status badges */
+.admin-title-with-status {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.event-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 5.5rem;
+    padding: 0.38rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+}
+
+.event-status-new {
+    color: #4338ca;
+    background: #e0e7ff;
+}
+
+.event-status-open {
+    color: #15803d;
+    background: #dcfce7;
+}
+
+.event-status-completed {
+    color: #475569;
+    background: #e2e8f0;
+}
+/* Event status badges */
+.admin-title-with-status,
+.event-detail-title-with-status {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.event-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 5.5rem;
+    padding: 0.38rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+}
+
+.event-status-new {
+    color: #4338ca;
+    background: #e0e7ff;
+}
+
+.event-status-open {
+    color: #15803d;
+    background: #dcfce7;
+}
+
+.event-status-completed {
+    color: #475569;
+    background: #e2e8f0;
+}
+.event-card-status-stack {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.event-card-title-with-status {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+/* Fix public event card status badge overlap */
+.event-card .event-visual {
+    position: relative;
+    min-height: 9.5rem;
+}
+
+.event-card-status-stack {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.55rem;
+    z-index: 2;
+}
+
+    .event-card-status-stack .event-status-badge,
+    .event-card-status-stack .status-badge {
+        position: static;
+        margin: 0;
+        white-space: nowrap;
+    }
+.event-card .event-visual {
+    position: relative;
+    min-height: 9.5rem;
+}
+
+.event-card-status-stack {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.55rem;
+    z-index: 2;
+}
+
+    .event-card-status-stack .event-status-badge,
+    .event-card-status-stack .status-badge {
+        position: static;
+        margin: 0;
+        white-space: nowrap;
+    }
+/* Event status badges */
+.admin-title-with-status,
+.event-detail-title-with-status {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.event-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 5.5rem;
+    padding: 0.38rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+}
+
+.event-status-new {
+    color: #4338ca;
+    background: #e0e7ff;
+}
+
+.event-status-open {
+    color: #15803d;
+    background: #dcfce7;
+}
+
+.event-status-completed {
+    color: #475569;
+    background: #e2e8f0;
+}
+
+.event-card .event-visual {
+    position: relative;
+    min-height: 9.5rem;
+}
+
+.event-card-status-stack {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.55rem;
+    z-index: 2;
+}
+
+    .event-card-status-stack .event-status-badge,
+    .event-card-status-stack .status-badge {
+        position: static;
+        margin: 0;
+        white-space: nowrap;
+    }
+/* Wider public page layout */
+.app-shell {
+    width: min(96vw, 1600px);
+    max-width: 1600px;
+}
+
+    .app-shell > main {
+        width: 100%;
+    }
+
+.page-hero,
+.filter-card,
+.event-card,
+.event-details-card,
+.action-panel {
+    border-radius: 1.1rem;
+}
+/* Make public homepage and event pages feel closer to admin width */
+@media (min-width: 1400px) {
+    .container.app-shell {
+        max-width: 1600px;
+    }
+
+    .site-header .container,
+    .site-footer .container {
+        max-width: 1600px;
+    }
+}
+/* Keep public and admin navbar visually consistent */
+.app-navbar-inner {
+    width: min(96vw, 1600px);
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.app-navbar-inner {
+    width: min(96vw, 1600px);
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+

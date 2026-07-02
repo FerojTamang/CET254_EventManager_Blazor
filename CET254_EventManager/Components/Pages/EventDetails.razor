@@ -23,8 +23,8 @@ else if (!string.IsNullOrWhiteSpace(_errorMessage))
 else if (_eventItem is not null)
 {
     var isFull = GetCapacityRemaining(_eventItem).HasValue && GetCapacityRemaining(_eventItem) <= 0;
-    var statusText = _eventItem.EventDate.Date < DateTime.Today ? "Registration Closed" : isFull ? "Full" : "Registration Open";
-    var statusClass = _eventItem.EventDate.Date < DateTime.Today || isFull ? "badge-gray" : "badge-green";
+    var isCompleted = IsEventCompleted(_eventItem);
+    var registrationAvailable = !isCompleted && !isFull;
 
     @if (!string.IsNullOrWhiteSpace(_successMessage))
     {
@@ -32,6 +32,7 @@ else if (_eventItem is not null)
             @_successMessage
         </div>
     }
+
     @if (!string.IsNullOrWhiteSpace(_registrationErrorMessage))
     {
         <div class="alert alert-danger" role="alert">
@@ -45,19 +46,27 @@ else if (_eventItem is not null)
                 <span>@_eventItem.EventDate.ToString("MMM")</span>
                 <strong>@_eventItem.EventDate.Day</strong>
             </div>
+
             <div>
                 <p class="page-kicker">Event details</p>
-                <h1 class="mb-2">@_eventItem.Title</h1>
-                <p class="page-subtitle mb-0">@_eventItem.EventDate.ToString("D") | @FormatTimeShort(_eventItem.StartTime) - @FormatTimeShort(_eventItem.EndTime)</p>
+                <h1 class="mb-2 event-detail-title-with-status">
+                    @_eventItem.Title
+                    <span class="event-status-badge @GetEventStatusBadgeClass(_eventItem)">
+                        @GetEventStatusText(_eventItem)
+                    </span>
+                </h1>
+                <p class="page-subtitle mb-0">
+                    @_eventItem.EventDate.ToString("D") | @FormatTimeShort(_eventItem.StartTime) - @FormatTimeShort(_eventItem.EndTime)
+                </p>
             </div>
         </div>
-        <span class="status-badge @statusClass">@statusText</span>
     </section>
 
     <div class="row g-4">
         <div class="col-lg-8">
             <article class="card event-details-card h-100">
                 <div class="event-visual event-visual-blue event-detail-visual"></div>
+
                 <div class="card-body p-4 p-lg-5">
                     <h2 class="h4 mb-3">About this event</h2>
                     <p class="lead text-muted mb-4">@_eventItem.Description</p>
@@ -69,6 +78,7 @@ else if (_eventItem is not null)
                                 <strong>@_eventItem.EventDate.ToString("D")</strong>
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <div class="detail-mini-card">
                                 <div class="text-muted small">Time</div>
@@ -103,19 +113,26 @@ else if (_eventItem is not null)
         <div class="col-lg-4">
             <aside class="card action-panel sticky-lg-top">
                 <div class="card-body p-4">
-                    <h2 class="h5 mb-3">Registration</h2>
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                        <h2 class="h5 mb-0">Registration</h2>
+                        <span class="event-status-badge @GetEventStatusBadgeClass(_eventItem)">
+                            @GetEventStatusText(_eventItem)
+                        </span>
+                    </div>
+
                     <div class="registration-meter mb-4">
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Confirmed</span>
                             <strong>@GetConfirmedRegistrationCount(_eventItem)</strong>
                         </div>
+
                         <div class="d-flex justify-content-between">
                             <span class="text-muted">Capacity remaining</span>
                             <strong>@GetCapacityRemainingText(_eventItem)</strong>
                         </div>
                     </div>
 
-                    @if (_eventItem.EventDate.Date >= DateTime.Today && !isFull)
+                    @if (registrationAvailable)
                     {
                         @if (!_isAuthenticated)
                         {
@@ -130,9 +147,23 @@ else if (_eventItem is not null)
                             </div>
                         }
                     }
+                    else if (isCompleted)
+                    {
+                        <div class="alert alert-secondary mb-0">
+                            This event is completed. Registration is closed.
+                        </div>
+                    }
+                    else if (isFull)
+                    {
+                        <div class="alert alert-secondary mb-0">
+                            This event is full. Registration is not currently available.
+                        </div>
+                    }
                     else
                     {
-                        <div class="alert alert-secondary mb-0">Registration is not currently available for this event.</div>
+                        <div class="alert alert-secondary mb-0">
+                            Registration is not currently available for this event.
+                        </div>
                     }
 
                     <a href="/events" class="btn btn-outline-primary w-100 mt-3">Back to Events</a>
@@ -148,6 +179,7 @@ else if (_eventItem is not null)
     public int Id { get; set; }
 
     private Event? _eventItem;
+    private List<Event> _events = new();
     private bool _isLoading = true;
     private bool _isAuthenticated;
     private bool _isRegistering;
@@ -187,6 +219,19 @@ else if (_eventItem is not null)
     private async Task LoadEventDetailsAsync()
     {
         _eventItem = await EventService.GetEventDetailsAsync(Id);
+
+        var eventSummaries = await EventService.GetUpcomingEventsAsync();
+        _events = new List<Event>();
+
+        foreach (var eventSummary in eventSummaries)
+        {
+            _events.Add(await EventService.GetEventDetailsAsync(eventSummary.Id));
+        }
+
+        if (_eventItem is not null && !_events.Any(eventItem => eventItem.Id == _eventItem.Id))
+        {
+            _events.Add(_eventItem);
+        }
     }
 
     private async Task RegisterForEventAsync()
@@ -197,6 +242,12 @@ else if (_eventItem is not null)
 
         try
         {
+            if (_eventItem is not null && IsEventCompleted(_eventItem))
+            {
+                _registrationErrorMessage = "Registration is closed because this event is completed.";
+                return;
+            }
+
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = await UserManager.GetUserAsync(authenticationState.User);
 
@@ -248,11 +299,6 @@ else if (_eventItem is not null)
         return $"/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
     }
 
-    private static string FormatTime(TimeSpan time)
-    {
-        return DateTime.Today.Add(time).ToString("h:mm tt");
-    }
-
     private static string FormatTimeShort(TimeSpan time)
     {
         return time.ToString(@"hh\:mm");
@@ -290,5 +336,52 @@ else if (_eventItem is not null)
     {
         var venues = GetVenues(eventItem);
         return venues.Count == 0 ? null : venues.Min(venue => venue.Capacity) - GetConfirmedRegistrationCount(eventItem);
+    }
+
+    private string GetEventStatusText(Event eventItem)
+    {
+        if (IsEventCompleted(eventItem))
+        {
+            return "Completed";
+        }
+
+        if (IsLatestFutureEvent(eventItem))
+        {
+            return "New";
+        }
+
+        return "Open";
+    }
+
+    private string GetEventStatusBadgeClass(Event eventItem)
+    {
+        if (IsEventCompleted(eventItem))
+        {
+            return "event-status-completed";
+        }
+
+        if (IsLatestFutureEvent(eventItem))
+        {
+            return "event-status-new";
+        }
+
+        return "event-status-open";
+    }
+
+    private bool IsLatestFutureEvent(Event eventItem)
+    {
+        var latestFutureEventId = _events
+            .Where(item => !IsEventCompleted(item))
+            .Select(item => item.Id)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return eventItem.Id == latestFutureEventId;
+    }
+
+    private static bool IsEventCompleted(Event eventItem)
+    {
+        var eventEndDateTime = eventItem.EventDate.Date.Add(eventItem.EndTime);
+        return eventEndDateTime < DateTime.Now;
     }
 }

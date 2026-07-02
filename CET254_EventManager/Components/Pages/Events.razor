@@ -41,10 +41,12 @@ else
                     <label for="searchTerm" class="form-label">Search Term</label>
                     <input id="searchTerm" class="form-control" placeholder="Search events" @bind="_filter.SearchTerm" @bind:event="oninput" />
                 </div>
+
                 <div class="col-lg-2 col-md-6">
                     <label for="eventDate" class="form-label">Event Date</label>
                     <input id="eventDate" type="date" class="form-control" value="@FormatDateInput(_filter.Date)" @onchange="SetFilterDate" />
                 </div>
+
                 <div class="col-lg-2 col-md-6">
                     <label for="venueId" class="form-label">Venue</label>
                     <select id="venueId" class="form-select" value="@(_filter.VenueId?.ToString() ?? string.Empty)" @onchange="SetFilterVenue">
@@ -55,6 +57,7 @@ else
                         }
                     </select>
                 </div>
+
                 <div class="col-lg-2 col-md-6">
                     <label for="activityId" class="form-label">Activity</label>
                     <select id="activityId" class="form-select" value="@(_filter.ActivityId?.ToString() ?? string.Empty)" @onchange="SetFilterActivity">
@@ -65,6 +68,7 @@ else
                         }
                     </select>
                 </div>
+
                 <div class="col-lg-2 col-md-6">
                     <label for="activityType" class="form-label">Activity Type</label>
                     <select id="activityType" class="form-select" @bind="_filter.ActivityType">
@@ -75,11 +79,13 @@ else
                         }
                     </select>
                 </div>
+
                 <div class="col-lg-1 col-md-6">
                     <button type="button" class="btn btn-primary w-100" @onclick="LoadEventsAsync">Filter</button>
                 </div>
             </div>
         </div>
+
         <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span class="text-muted small">Refine by keyword, date, venue, activity, or type.</span>
             <button type="button" class="btn btn-link text-decoration-none p-0" @onclick="ClearFiltersAsync">Clear Filters</button>
@@ -91,44 +97,53 @@ else
         {
             var capacityRemaining = GetCapacityRemaining(eventItem);
             var isFull = capacityRemaining.HasValue && capacityRemaining <= 0;
-            var isAlmostFull = capacityRemaining.HasValue && capacityRemaining > 0 && capacityRemaining <= 5;
-            var statusClass = isFull ? "badge-gray" : isAlmostFull ? "badge-orange" : "badge-green";
-            var statusText = isFull ? "Full" : isAlmostFull ? "Almost Full" : "Open";
+            var isCompleted = IsEventCompleted(eventItem);
             var capacityLabel = capacityRemaining.HasValue ? $"{Math.Max(capacityRemaining.Value, 0)} spaces left" : "Open capacity";
             var visualClass = GetVisualClass(eventItem);
 
             <div class="col-xl-4 col-md-6">
                 <article class="card h-100 event-card">
                     <div class="event-visual @visualClass">
-                        <span class="status-badge @statusClass">@statusText</span>
+                        <div class="event-card-status-stack">
+                            <span class="event-status-badge @GetEventStatusBadgeClass(eventItem)">
+                                @GetEventStatusText(eventItem)
+                            </span>
+                        </div>
                     </div>
+
                     <div class="card-body p-4">
                         <div class="d-flex gap-3 mb-3">
                             <div class="date-pill">
                                 <span>@eventItem.EventDate.ToString("MMM")</span>
                                 <strong>@eventItem.EventDate.Day</strong>
                             </div>
+
                             <div class="min-w-0">
                                 <h2 class="h5 mb-1">@eventItem.Title</h2>
                                 <p class="text-muted small mb-1">@GetVenueSummary(eventItem)</p>
                                 <p class="text-muted small mb-0">@FormatTimeShort(eventItem.StartTime) - @FormatTimeShort(eventItem.EndTime)</p>
                             </div>
                         </div>
+
                         <p class="event-description mb-3">@GetShortDescription(eventItem.Description)</p>
+
                         <div class="d-flex flex-wrap gap-2 mb-3">
                             @foreach (var activity in GetActivityNames(eventItem))
                             {
                                 <span class="activity-badge @GetActivityBadgeClass(activity)">@activity</span>
                             }
                         </div>
+
                         <div class="registration-line">
                             <span>@GetConfirmedRegistrationCount(eventItem) confirmed</span>
                             <span>@capacityLabel</span>
                         </div>
                     </div>
+
                     <div class="card-footer d-flex flex-wrap gap-2 p-4">
                         <a class="btn btn-primary" href="/events/@eventItem.Id">View Details</a>
-                        @if (!isFull)
+
+                        @if (!isFull && !isCompleted)
                         {
                             <a class="btn btn-outline-primary" href="/events/@eventItem.Id">Register</a>
                         }
@@ -168,6 +183,11 @@ else
     private async Task LoadEventsAsync()
     {
         _events = await EventService.GetFilteredUpcomingEventsAsync(_filter);
+
+        _events = _events
+            .OrderBy(eventItem => IsEventCompleted(eventItem))
+            .ThenByDescending(eventItem => eventItem.Id)
+            .ToList();
     }
 
     private async Task ClearFiltersAsync()
@@ -195,11 +215,6 @@ else
         _filter.ActivityId = int.TryParse(args.Value?.ToString(), out var id) ? id : null;
     }
 
-    private static string FormatTime(TimeSpan time)
-    {
-        return DateTime.Today.Add(time).ToString("h:mm tt");
-    }
-
     private static string FormatTimeShort(TimeSpan time)
     {
         return time.ToString(@"hh\:mm");
@@ -219,17 +234,6 @@ else
             .ToList();
 
         return venues.Count == 0 ? "Venue to be confirmed" : string.Join(", ", venues);
-    }
-
-    private static string GetActivitySummary(Event eventItem)
-    {
-        var activities = eventItem.EventActivities
-            .Where(eventActivity => eventActivity.Activity is not null)
-            .Select(eventActivity => eventActivity.Activity.Name)
-            .Distinct()
-            .ToList();
-
-        return activities.Count == 0 ? "Activities to be confirmed" : string.Join(", ", activities);
     }
 
     private static List<string> GetActivityNames(Event eventItem)
@@ -259,6 +263,53 @@ else
     private static string GetShortDescription(string description)
     {
         return description.Length > 140 ? description[..140] + "..." : description;
+    }
+
+    private string GetEventStatusText(Event eventItem)
+    {
+        if (IsEventCompleted(eventItem))
+        {
+            return "Completed";
+        }
+
+        if (IsLatestFutureEvent(eventItem))
+        {
+            return "New";
+        }
+
+        return "Open";
+    }
+
+    private string GetEventStatusBadgeClass(Event eventItem)
+    {
+        if (IsEventCompleted(eventItem))
+        {
+            return "event-status-completed";
+        }
+
+        if (IsLatestFutureEvent(eventItem))
+        {
+            return "event-status-new";
+        }
+
+        return "event-status-open";
+    }
+
+    private bool IsLatestFutureEvent(Event eventItem)
+    {
+        var latestFutureEventId = _events
+            .Where(item => !IsEventCompleted(item))
+            .Select(item => item.Id)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return eventItem.Id == latestFutureEventId;
+    }
+
+    private static bool IsEventCompleted(Event eventItem)
+    {
+        var eventEndDateTime = eventItem.EventDate.Date.Add(eventItem.EndTime);
+        return eventEndDateTime < DateTime.Now;
     }
 
     private static string GetVisualClass(Event eventItem)

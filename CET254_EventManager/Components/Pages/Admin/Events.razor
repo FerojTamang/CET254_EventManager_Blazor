@@ -196,7 +196,12 @@
                         <div class="admin-panel-header">
                             <div>
                                 <span class="admin-section-kicker">Details</span>
-                                <h2>@_selectedEvent.Title</h2>
+                                <h2 class="admin-title-with-status">
+                                    @_selectedEvent.Title
+                                    <span class="event-status-badge @GetEventStatusBadgeClass(_selectedEvent)">
+                                        @GetEventStatusText(_selectedEvent)
+                                    </span>
+                                </h2>
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ClearSelection">Close</button>
                         </div>
@@ -376,7 +381,7 @@
                 @if (_events.Count == 0)
                 {
                     <div class="admin-empty-state">
-                        <strong>No upcoming events</strong>
+                        <strong>No events</strong>
                         <span>Create an event to add it to the programme.</span>
                         <button type="button" class="btn btn-primary mt-3" @onclick="ShowCreateForm">Create Event</button>
                     </div>
@@ -399,6 +404,7 @@
                                 <thead>
                                     <tr>
                                         <th scope="col">Event</th>
+                                        <th scope="col">Status</th>
                                         <th scope="col">Date</th>
                                         <th scope="col">Time</th>
                                         <th scope="col">Venues</th>
@@ -420,12 +426,20 @@
                                                     </div>
                                                 </div>
                                             </td>
+
+                                            <td>
+                                                <span class="event-status-badge @GetEventStatusBadgeClass(eventItem)">
+                                                    @GetEventStatusText(eventItem)
+                                                </span>
+                                            </td>
+
                                             <td>
                                                 <span class="admin-date-badge">
                                                     <strong>@eventItem.EventDate.ToString("MMM")</strong>
                                                     <small>@eventItem.EventDate.Day</small>
                                                 </span>
                                             </td>
+
                                             <td>@FormatTime(eventItem.StartTime) - @FormatTime(eventItem.EndTime)</td>
                                             <td>@GetVenueSummary(eventItem)</td>
                                             <td>@GetActivitySummary(eventItem)</td>
@@ -635,6 +649,11 @@
         {
             _events.Add(await EventService.GetEventDetailsAsync(eventSummary.Id));
         }
+
+        _events = _events
+            .OrderBy(eventItem => IsEventCompleted(eventItem))
+            .ThenByDescending(eventItem => eventItem.Id)
+            .ToList();
     }
 
     private void ShowCreateForm()
@@ -975,6 +994,53 @@
         }
 
         return (venueCapacities.Min() - GetConfirmedRegistrationCount(eventItem)).ToString();
+    }
+
+    private string GetEventStatusText(Event eventItem)
+    {
+        if (IsEventCompleted(eventItem))
+        {
+            return "Completed";
+        }
+
+        if (IsLatestFutureEvent(eventItem))
+        {
+            return "New";
+        }
+
+        return "Open";
+    }
+
+    private string GetEventStatusBadgeClass(Event eventItem)
+    {
+        if (IsEventCompleted(eventItem))
+        {
+            return "event-status-completed";
+        }
+
+        if (IsLatestFutureEvent(eventItem))
+        {
+            return "event-status-new";
+        }
+
+        return "event-status-open";
+    }
+
+    private bool IsLatestFutureEvent(Event eventItem)
+    {
+        var latestFutureEventId = _events
+            .Where(item => !IsEventCompleted(item))
+            .Select(item => item.Id)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return eventItem.Id == latestFutureEventId;
+    }
+
+    private static bool IsEventCompleted(Event eventItem)
+    {
+        var eventEndDateTime = eventItem.EventDate.Date.Add(eventItem.EndTime);
+        return eventEndDateTime < DateTime.Now;
     }
 
     private static bool CanConfirm(Registration registration)
