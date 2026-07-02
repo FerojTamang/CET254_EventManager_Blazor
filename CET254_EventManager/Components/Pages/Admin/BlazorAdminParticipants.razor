@@ -1,0 +1,531 @@
+@page "/blazor/admin/participants"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Components.Forms
+@inject IParticipantService ParticipantService
+@inject IRegistrationService RegistrationService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Blazor Admin Participants</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+        <p class="text-uppercase text-muted fw-semibold mb-1">Admin management</p>
+        <h1 class="mb-1">Participants</h1>
+        <p class="text-muted mb-0">Create, edit, and review participant profiles.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Participant</button>
+        <a class="btn btn-outline-primary" href="/blazor/admin">Blazor Admin Dashboard</a>
+        <a class="btn btn-outline-secondary" href="/AdminParticipants">MVC Participants</a>
+    </div>
+</div>
+
+@if (_isLoading)
+{
+    <div class="alert alert-info" role="status">
+        Loading participants...
+    </div>
+}
+else if (!_isAuthenticated)
+{
+    <div class="alert alert-warning" role="alert">
+        Please <a href="@GetLoginUrl()" class="alert-link">log in</a> with an admin account to manage participants.
+    </div>
+}
+else if (!_isAdmin)
+{
+    <div class="alert alert-danger" role="alert">
+        You do not have permission to manage participants.
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(_successMessage))
+    {
+        <div class="alert alert-success" role="status">
+            @_successMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @_errorMessage
+        </div>
+    }
+
+    @if (_mode == PageMode.Create)
+    {
+        <div class="card form-card mb-4">
+            <div class="card-header p-4">
+                <h2 class="h5 mb-0">Create Participant</h2>
+            </div>
+            <EditForm Model="_formModel" OnValidSubmit="CreateParticipantAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger px-4 pt-3" />
+                <div class="card-body p-4">
+                    @ParticipantFormFields()
+                </div>
+                <div class="card-footer p-4">
+                    <button type="submit" class="btn btn-primary" disabled="@_isSaving">@(_isSaving ? "Creating..." : "Create")</button>
+                    <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+    else if (_mode == PageMode.Edit)
+    {
+        <div class="card form-card mb-4">
+            <div class="card-header p-4">
+                <h2 class="h5 mb-0">Edit Participant</h2>
+            </div>
+            <EditForm Model="_formModel" OnValidSubmit="UpdateParticipantAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger px-4 pt-3" />
+                <div class="card-body p-4">
+                    @ParticipantFormFields()
+                    <div class="mb-0">
+                        <label class="form-label">Identity User</label>
+                        <input value="@(_formModel.ApplicationUserId ?? "Not linked")" class="form-control" disabled />
+                        <div class="form-text">Identity user accounts are not managed from participant pages.</div>
+                    </div>
+                </div>
+                <div class="card-footer p-4">
+                    <button type="submit" class="btn btn-primary" disabled="@_isSaving">@(_isSaving ? "Saving..." : "Save")</button>
+                    <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+    else if (_mode == PageMode.Details && _selectedParticipant is not null)
+    {
+        <div class="card mb-4">
+            <div class="card-header p-4 d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h2 class="h4 mb-1">@_selectedParticipant.FullName</h2>
+                    <p class="text-muted mb-0">Participant details and registration history.</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ClearSelection">Close</button>
+            </div>
+            <div class="card-body p-4">
+                <dl class="row detail-list">
+                    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@_selectedParticipant.Email</dd>
+                    <dt class="col-sm-3">Phone</dt><dd class="col-sm-9">@GetPhoneText(_selectedParticipant)</dd>
+                    <dt class="col-sm-3">Identity User</dt><dd class="col-sm-9">@(_selectedParticipant.ApplicationUserId ?? "Not linked")</dd>
+                    <dt class="col-sm-3">Registrations</dt><dd class="col-sm-9">@_selectedRegistrations.Count</dd>
+                </dl>
+
+                @if (_selectedRegistrations.Count == 0)
+                {
+                    <p class="text-muted mb-0">This participant has no registrations.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Event</th>
+                                    <th scope="col">Event Date</th>
+                                    <th scope="col">Registered</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var registration in _selectedRegistrations)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@GetEventTitle(registration)</td>
+                                        <td>@FormatEventDate(registration)</td>
+                                        <td>@registration.RegistrationDate.ToString("g")</td>
+                                        <td><span class="status-badge @GetStatusBadgeClass(registration.Status)">@registration.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+            <div class="card-footer p-4">
+                <button type="button" class="btn btn-warning" @onclick="() => ShowEditForm(_selectedParticipant.Id)">Edit</button>
+                <button type="button" class="btn btn-danger" @onclick="() => ShowDeleteConfirmationAsync(_selectedParticipant.Id)">Delete</button>
+            </div>
+        </div>
+    }
+    else if (_mode == PageMode.Delete && _selectedParticipant is not null)
+    {
+        <div class="card mb-4">
+            <div class="card-header p-4">
+                <h2 class="h5 mb-0">Delete Participant</h2>
+            </div>
+            <div class="card-body p-4">
+                @if (_selectedRegistrations.Count > 0)
+                {
+                    <div class="alert alert-warning">
+                        This participant has @_selectedRegistrations.Count event registration(s). Deletion will be blocked by the existing service rule.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger">
+                        Are you sure you want to delete this participant profile?
+                    </div>
+                }
+
+                <dl class="row detail-list mb-0">
+                    <dt class="col-sm-3">Name</dt><dd class="col-sm-9">@_selectedParticipant.FullName</dd>
+                    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@_selectedParticipant.Email</dd>
+                    <dt class="col-sm-3">Phone</dt><dd class="col-sm-9">@GetPhoneText(_selectedParticipant)</dd>
+                    <dt class="col-sm-3">Registrations</dt><dd class="col-sm-9">@_selectedRegistrations.Count</dd>
+                </dl>
+            </div>
+            <div class="card-footer p-4">
+                <button type="button" class="btn btn-danger" disabled="@_isSaving" @onclick="DeleteParticipantAsync">@(_isSaving ? "Deleting..." : "Delete")</button>
+                <button type="button" class="btn btn-outline-primary" @onclick="ClearSelection">Cancel</button>
+            </div>
+        </div>
+    }
+
+    @if (_participants.Count == 0)
+    {
+        <div class="empty-state">
+            <h2 class="h4">No participants yet</h2>
+            <p class="text-muted mb-3">Create the first participant profile to get started.</p>
+            <button type="button" class="btn btn-primary" @onclick="ShowCreateForm">Create Participant</button>
+        </div>
+    }
+    else
+    {
+        <div class="card admin-table-card">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Phone</th>
+                            <th scope="col">Registrations</th>
+                            <th scope="col" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var participant in _participants)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@participant.FullName</td>
+                                <td>@participant.Email</td>
+                                <td>@GetPhoneText(participant)</td>
+                                <td>@GetRegistrationCount(participant.Id)</td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-primary" @onclick="() => ShowDetailsAsync(participant.Id)">Details</button>
+                                        <button type="button" class="btn btn-warning" @onclick="() => ShowEditForm(participant.Id)">Edit</button>
+                                        <button type="button" class="btn btn-danger" @onclick="() => ShowDeleteConfirmationAsync(participant.Id)">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private enum PageMode
+    {
+        List,
+        Create,
+        Edit,
+        Details,
+        Delete
+    }
+
+    private List<Participant> _participants = new();
+    private Dictionary<int, int> _registrationCounts = new();
+    private ParticipantViewModel _formModel = new();
+    private Participant? _selectedParticipant;
+    private List<Registration> _selectedRegistrations = new();
+    private PageMode _mode = PageMode.List;
+    private bool _isLoading = true;
+    private bool _isAuthenticated;
+    private bool _isAdmin;
+    private bool _isSaving;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPageAsync();
+    }
+
+    private RenderFragment ParticipantFormFields() => @<div>
+        <div class="mb-3">
+            <label for="participantFullName" class="form-label">Full name</label>
+            <InputText id="participantFullName" class="form-control" @bind-Value="_formModel.FullName" />
+            <ValidationMessage For="@(() => _formModel.FullName)" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="participantEmail" class="form-label">Email</label>
+            <InputText id="participantEmail" class="form-control" @bind-Value="_formModel.Email" />
+            <ValidationMessage For="@(() => _formModel.Email)" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="participantPhoneNumber" class="form-label">Phone number</label>
+            <InputText id="participantPhoneNumber" class="form-control" @bind-Value="_formModel.PhoneNumber" />
+            <ValidationMessage For="@(() => _formModel.PhoneNumber)" class="text-danger" />
+        </div>
+    </div>;
+
+    private async Task LoadPageAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
+            _isAdmin = authenticationState.User.IsInRole("Admin");
+
+            if (!_isAuthenticated || !_isAdmin)
+            {
+                _participants.Clear();
+                return;
+            }
+
+            await LoadParticipantsAsync();
+        }
+        catch
+        {
+            _participants.Clear();
+            _errorMessage = "Unable to load participants right now.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task LoadParticipantsAsync()
+    {
+        _participants = await ParticipantService.GetAllParticipantsAsync();
+        _registrationCounts = new Dictionary<int, int>();
+
+        foreach (var participant in _participants)
+        {
+            var registrations = await RegistrationService.GetParticipantRegistrationsAsync(participant.Id);
+            _registrationCounts[participant.Id] = registrations.Count;
+        }
+    }
+
+    private void ShowCreateForm()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _selectedParticipant = null;
+        _selectedRegistrations.Clear();
+        _formModel = new ParticipantViewModel();
+        _mode = PageMode.Create;
+    }
+
+    private void ShowEditForm(int participantId)
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        var participant = _participants.FirstOrDefault(item => item.Id == participantId);
+
+        if (participant is null)
+        {
+            _errorMessage = "Unable to find this participant.";
+            return;
+        }
+
+        _selectedParticipant = participant;
+        _selectedRegistrations.Clear();
+        _formModel = MapParticipant(participant);
+        _mode = PageMode.Edit;
+    }
+
+    private async Task ShowDetailsAsync(int participantId)
+    {
+        await SelectParticipantAsync(participantId, PageMode.Details);
+    }
+
+    private async Task ShowDeleteConfirmationAsync(int participantId)
+    {
+        await SelectParticipantAsync(participantId, PageMode.Delete);
+    }
+
+    private async Task SelectParticipantAsync(int participantId, PageMode mode)
+    {
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            _selectedParticipant = await ParticipantService.GetParticipantByIdAsync(participantId);
+            _selectedRegistrations = await RegistrationService.GetParticipantRegistrationsAsync(participantId);
+            _mode = mode;
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to load this participant right now.";
+        }
+    }
+
+    private async Task CreateParticipantAsync()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _isSaving = true;
+
+        try
+        {
+            var participant = new Participant(_formModel.FullName, _formModel.Email, _formModel.PhoneNumber);
+            await ParticipantService.CreateParticipantAsync(participant);
+            _successMessage = "Participant created successfully.";
+            await LoadParticipantsAsync();
+            ClearSelection();
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to create this participant right now.";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task UpdateParticipantAsync()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _isSaving = true;
+
+        try
+        {
+            var participant = await ParticipantService.GetParticipantByIdAsync(_formModel.Id);
+            participant.UpdateDetails(_formModel.FullName, _formModel.Email, _formModel.PhoneNumber, _formModel.ApplicationUserId);
+            await ParticipantService.UpdateParticipantAsync(participant);
+            _successMessage = "Participant updated successfully.";
+            await LoadParticipantsAsync();
+            ClearSelection();
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to update this participant right now.";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task DeleteParticipantAsync()
+    {
+        if (_selectedParticipant is null)
+        {
+            _errorMessage = "Unable to find this participant.";
+            return;
+        }
+
+        _errorMessage = null;
+        _successMessage = null;
+        _isSaving = true;
+
+        try
+        {
+            await ParticipantService.DeleteParticipantAsync(_selectedParticipant.Id);
+            _successMessage = "Participant deleted successfully.";
+            await LoadParticipantsAsync();
+            ClearSelection();
+        }
+        catch (CET254_EventManager.Exceptions.AppException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        catch
+        {
+            _errorMessage = "Unable to delete this participant right now.";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void ClearSelection()
+    {
+        _mode = PageMode.List;
+        _selectedParticipant = null;
+        _selectedRegistrations.Clear();
+        _formModel = new ParticipantViewModel();
+    }
+
+    private string GetLoginUrl()
+    {
+        var returnUrl = new Uri(NavigationManager.Uri).PathAndQuery;
+        return $"/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+
+    private int GetRegistrationCount(int participantId)
+    {
+        return _registrationCounts.TryGetValue(participantId, out var count) ? count : 0;
+    }
+
+    private static ParticipantViewModel MapParticipant(Participant participant)
+    {
+        return new ParticipantViewModel
+        {
+            Id = participant.Id,
+            FullName = participant.FullName,
+            Email = participant.Email,
+            PhoneNumber = participant.PhoneNumber,
+            ApplicationUserId = participant.ApplicationUserId
+        };
+    }
+
+    private static string GetPhoneText(Participant participant)
+    {
+        return string.IsNullOrWhiteSpace(participant.PhoneNumber) ? "Not provided" : participant.PhoneNumber;
+    }
+
+    private static string GetEventTitle(Registration registration)
+    {
+        return registration.Event?.Title ?? "Event unavailable";
+    }
+
+    private static string FormatEventDate(Registration registration)
+    {
+        return registration.Event is null
+            ? "Date unavailable"
+            : registration.Event.EventDate.ToString("dddd, dd MMM yyyy");
+    }
+
+    private static string GetStatusBadgeClass(RegistrationStatus status)
+    {
+        return status switch
+        {
+            RegistrationStatus.Pending => "badge-orange",
+            RegistrationStatus.Confirmed => "badge-green",
+            RegistrationStatus.Cancelled => "badge-gray",
+            _ => "badge-blue"
+        };
+    }
+}
