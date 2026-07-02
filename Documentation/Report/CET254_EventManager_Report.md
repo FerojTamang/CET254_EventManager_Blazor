@@ -4,7 +4,7 @@
 
 **Project Title:** Community Event Management System  
 **Module:** CET254 Advanced Programming  
-**Technology Stack:** ASP.NET Core MVC, C#, Entity Framework Core, SQL Server LocalDB, ASP.NET Core Identity, Bootstrap, xUnit  
+**Technology Stack:** ASP.NET Core Blazor Web App, C#, Entity Framework Core, SQL Server LocalDB, ASP.NET Core Identity, Bootstrap, xUnit  
 
 **Student Name:** [Insert Student Name]  
 **Student ID:** [Insert Student ID]  
@@ -14,9 +14,9 @@
 
 # 1. Introduction
 
-The Community Event Management System is an ASP.NET Core MVC web application developed for the CET254 Advanced Programming assignment. The purpose of the system is to support the management and registration of community events. Administrators can manage events, venues, activities, participants, and registrations, while users can browse upcoming events, apply filters, view event details, register for events, and manage their own registrations.
+The Community Event Management System is an ASP.NET Core Blazor Web App developed for the CET254 Advanced Programming assignment. The purpose of the system is to support the management and registration of community events. Administrators can manage events, venues, activities, participants, and registrations through Blazor components, while users can browse upcoming events, apply filters, view event details, register for events, and manage their own registrations.
 
-The application demonstrates key advanced programming concepts required by the assignment rubric. These include object-oriented programming, inheritance, encapsulation, interfaces, polymorphism, method overloading, design patterns, database relationships, validation, exception handling, and automated testing. The system also uses ASP.NET Core Identity to support authentication and role-based access control.
+The application demonstrates key advanced programming concepts required by the assignment rubric. These include object-oriented programming, inheritance, encapsulation, interfaces, polymorphism, method overloading, design patterns, database relationships, validation, exception handling, and automated testing. The system also uses ASP.NET Core Identity to support authentication and role-based access control. ASP.NET Core Identity Razor Pages are retained for authentication pages such as login, register, and logout. The main event management workflows are implemented using Blazor components.
 
 ---
 
@@ -89,26 +89,28 @@ The `Registration` entity is more than a simple junction table because it also s
 The application uses a layered architecture:
 
 ```text
-Browser / Razor Views
-        ↓
-MVC Controllers
-        ↓
-Service Interfaces
-        ↓
-Service Implementations
-        ↓
-Generic Repository
-        ↓
-ApplicationDbContext
-        ↓
+Browser
+        |
+Presentation Layer: Blazor components
+        |
+Authentication Layer: ASP.NET Core Identity Razor Pages
+        |
+Business Logic Layer: Services
+        |
+Data Access Layer: Repository pattern with EF Core DbContext
+        |
+Domain Layer: Models, validation, and custom exceptions
+        |
+Testing Layer: xUnit tests
+        |
 SQL Server LocalDB
 ```
 
-Controllers do not access `ApplicationDbContext` directly. Instead, controllers depend on service interfaces such as `IEventService`, `IRegistrationService`, `IVenueService`, `IActivityService`, and `IParticipantService`. This improves testability and maintains separation of concerns.
+Blazor components do not access `ApplicationDbContext` directly. Instead, components depend on service interfaces such as `IEventService`, `IRegistrationService`, `IVenueService`, `IActivityService`, and `IParticipantService`. This improves testability and maintains separation of concerns.
 
-ASP.NET Core Identity is used for authentication and role-based authorization. The system includes `Admin` and `User` roles. Bootstrap is used to provide a responsive and consistent user interface. xUnit tests target the service layer and use the EF Core InMemory provider.
+ASP.NET Core Identity is used for authentication and role-based authorization. Identity Razor Pages are retained only for authentication pages such as login, register, and logout. The main user and admin workflows are implemented in Blazor components under `Components/Pages` and `Components/Pages/Admin`. The system includes `Admin` and `User` roles. Bootstrap is used to provide a responsive and consistent user interface. xUnit tests target the service layer and use the EF Core InMemory provider.
 
-[Insert Architecture Diagram: Documentation/UML/Images/architecture-diagram.png]
+Architecture diagram source: `Documentation/UML/Diagrams/architecture-diagram.mmd`.
 
 ---
 
@@ -116,27 +118,27 @@ ASP.NET Core Identity is used for authentication and role-based authorization. T
 
 ## 4.1 Use Case Diagram
 
-[Insert Documentation/UML/Images/use-case-diagram.png]
+Use case diagram source: `Documentation/UML/Diagrams/use-case-diagram.mmd`.
 
 The use case diagram shows the main interactions between the two actors and the system. The admin manages events, venues, activities, participants, and registrations. The user browses upcoming events, filters event lists, views event details, registers for events, and cancels personal registrations.
 
 ## 4.2 Class Diagram
 
-[Insert Documentation/UML/Images/class-diagram.png]
+Class diagram source: `Documentation/UML/Diagrams/class-diagram.mmd`.
 
 The class diagram shows the object-oriented structure of the system. The domain classes inherit from `BaseEntity`, services implement service interfaces, and the generic repository implements `IRepository<T>`. The diagram also shows polymorphism through `IEventFilterStrategy` and its concrete strategy implementations.
 
 ## 4.3 Entity Relationship Diagram
 
-[Insert Documentation/UML/Images/erd.png]
+ERD source: `Documentation/UML/Diagrams/erd.mmd`.
 
 The ERD shows the database structure. It includes domain tables, Identity tables, primary keys, foreign keys, and junction tables. The `Registrations` table links events and participants and stores registration-specific data such as registration date and status.
 
 ## 4.4 Sequence Diagram: Register for Event
 
-[Insert Documentation/UML/Images/sequence-register-event.png]
+Sequence diagram source: `Documentation/UML/Diagrams/sequence-register-event.mmd`.
 
-The sequence diagram explains the registration process. The controller gets the current Identity user, finds or creates the linked participant profile, and calls `RegistrationService.RegisterAsync`. The service checks event existence, participant existence, past event rules, duplicate registrations, and venue capacity before creating the registration.
+The sequence diagram explains the registration process. `Components/Pages/EventDetails.razor` gets the current Identity user, finds or creates the linked participant profile, and calls `RegistrationService.RegisterAsync`. The service checks event existence, participant existence, past event rules, duplicate registrations, and venue capacity before creating the registration.
 
 Alternate flows include duplicate registration, past event registration, and venue capacity exceeded.
 
@@ -241,7 +243,7 @@ The database uses restricted delete behavior to avoid accidental cascade deletes
 - Venues assigned to events cannot be deleted.
 - Activities assigned to events cannot be deleted.
 
-These protections prevent database exceptions from reaching the user interface and allow controllers to display friendly error messages.
+These protections prevent database exceptions from reaching the user interface and allow Blazor components to display friendly error messages.
 
 ---
 
@@ -302,7 +304,7 @@ The project uses interfaces to support abstraction and testability:
 - `IAdminDashboardService`
 - `IEventFilterStrategy`
 
-Controllers depend on service interfaces rather than concrete classes.
+Blazor components depend on service interfaces rather than concrete classes.
 
 ## 6.6 Polymorphism
 
@@ -341,13 +343,19 @@ Composition is used through navigation collections:
 
 # 7. Design Patterns, Data Structures, and Algorithms
 
-## 7.1 MVC Pattern
+## 7.1 Blazor Component-Based Presentation
 
-The application follows the MVC pattern:
+The application uses Blazor components for the main presentation layer:
 
-- Models represent domain and ViewModel data.
-- Views render the user interface.
-- Controllers handle HTTP requests and call services.
+- `Components/Pages/Events.razor` renders upcoming events and filtering.
+- `Components/Pages/EventDetails.razor` renders event details and registration.
+- `Components/Pages/MyRegistrations.razor` renders participant registrations.
+- `Components/Pages/Admin/Dashboard.razor` renders the admin dashboard.
+- `Components/Pages/Admin/Events.razor` manages event CRUD and venue/activity assignment.
+- `Components/Pages/Admin/Registrations.razor` manages registration confirmation and cancellation.
+- `Components/Pages/Admin/Participants.razor` manages participants.
+- `Components/Pages/Admin/Venues.razor` manages venues.
+- `Components/Pages/Admin/Activities.razor` manages activities.
 
 ## 7.2 Repository Pattern
 
@@ -368,13 +376,13 @@ The service layer contains business rules and validation. Examples include:
 - `ActivityService`
 - `ParticipantService`
 
-This keeps controllers focused on HTTP flow and ViewModel mapping.
+This keeps Blazor components focused on UI flow while services contain business rules.
 
 ## 7.4 Strategy Pattern
 
 The Strategy Pattern is used for event filtering. `EventService` applies all registered `IEventFilterStrategy` implementations to an `IQueryable<Event>`.
 
-This supports maintainability because new filters can be added without rewriting the controller.
+This supports maintainability because new filters can be added without rewriting the Blazor event listing component.
 
 ## 7.5 Dependency Injection
 
@@ -437,9 +445,9 @@ Examples include:
 
 `FutureDateAttribute` is a custom validation attribute. It validates that an event date is today or in the future. It returns valid for null values so `[Required]` can handle required fields separately.
 
-## 8.3 ModelState Validation
+## 8.3 Blazor Form Validation
 
-POST actions check `ModelState.IsValid` before calling services. If validation fails, the form is returned with validation messages.
+Blazor admin forms use `EditForm`, `DataAnnotationsValidator`, and `ValidationSummary` to validate ViewModels before calling services. Service-level validation still runs after form validation so business rules are enforced outside the UI.
 
 ## 8.4 Custom Exceptions
 
@@ -458,11 +466,11 @@ The application includes a custom exception hierarchy:
 
 ## 8.5 Friendly Error Messages
 
-Controllers catch `AppException` and display friendly messages using:
+Blazor components catch `AppException` and display friendly messages using component state such as:
 
-- `TempData["Error"]`
-- `TempData["Success"]`
-- `ModelState.AddModelError(...)`
+- `_errorMessage`
+- `_successMessage`
+- `_registrationErrorMessage`
 
 This avoids exposing raw stack traces to users.
 
@@ -524,7 +532,7 @@ The automated tests focus on:
 | UT-19 | DeleteVenueAsync_WhenVenueAssignedToEvent_ThrowsAppException | Checks venue delete protection. | `AppException` with `VENUE_IN_USE` thrown. | Passed |
 | UT-20 | DeleteActivityAsync_WhenActivityAssignedToEvent_ThrowsAppException | Checks activity delete protection. | `AppException` with `ACTIVITY_IN_USE` thrown. | Passed |
 
-[Insert Screenshot: dotnet test successful, total tests passing]
+Screenshot evidence still required: add or reference a current screenshot showing a successful test run. Do not mark this complete unless the screenshot is captured from the final project state.
 
 ---
 
@@ -573,7 +581,7 @@ The following 10-minute demonstration plan can be used for the final video:
 
 # 12. Conclusion
 
-The Community Event Management System provides a working ASP.NET Core MVC application for managing community events and registrations. The system supports admin workflows, user browsing, event filtering, registration, cancellation, dashboard reporting, validation, exception handling, and automated testing.
+The Community Event Management System provides a working ASP.NET Core Blazor Web App for managing community events and registrations. The system supports admin workflows, user browsing, event filtering, registration, cancellation, dashboard reporting, validation, exception handling, and automated testing.
 
 The project meets the main learning outcomes of CET254 Advanced Programming by demonstrating object-oriented design, inheritance, encapsulation, constructors, interfaces, polymorphism, method overloading, design patterns, database relationships, validation, custom exceptions, and unit testing.
 
@@ -590,8 +598,8 @@ Future improvements could include:
 
 # 13. References
 
-- Microsoft. ASP.NET Core MVC Documentation. [Insert full reference/link]
-- Microsoft. Entity Framework Core Documentation. [Insert full reference/link]
-- Microsoft. ASP.NET Core Identity Documentation. [Insert full reference/link]
-- xUnit Documentation. [Insert full reference/link]
-- Mermaid Documentation. [Insert full reference/link]
+- Microsoft. ASP.NET Core Blazor Documentation. [Reference link required]
+- Microsoft. Entity Framework Core Documentation. [Reference link required]
+- Microsoft. ASP.NET Core Identity Documentation. [Reference link required]
+- xUnit Documentation. [Reference link required]
+- Mermaid Documentation. [Reference link required]

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document describes the main actors and use cases for the Community Event Management System. It is based on the implemented ASP.NET Core MVC application.
+This document describes the main actors and use cases for the Community Event Management System. It is based on the implemented ASP.NET Core Blazor Web App. ASP.NET Core Identity Razor Pages are retained for authentication pages such as login, register, and logout. The main event management workflows are implemented using Blazor components.
 
 ## Actors
 

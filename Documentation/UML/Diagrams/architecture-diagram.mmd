@@ -1,31 +1,26 @@
-%% Community Event Management System - Architecture Diagram
+%% Community Event Management System - Blazor-First Architecture Diagram
 flowchart TD
     Browser[Browser]
-    Views[Bootstrap Razor Views]
-    Controllers[MVC Controllers]
-    ServiceInterfaces[Service Interfaces]
-    Services[Service Implementations]
-    Strategies[Strategy Filters]
-    Repository[Generic Repository]
-    DbContext[ApplicationDbContext]
+    Blazor[Presentation Layer: Blazor Components]
+    IdentityPages[Authentication Layer: Identity Razor Pages]
+    Services[Business Logic Layer: Services]
+    Strategies[Strategy Layer: Event Filter Strategies]
+    Repository[Data Access Layer: Generic Repository]
+    DbContext[EF Core ApplicationDbContext]
+    Domain[Domain Layer: Models, Validation, Exceptions]
     Database[(SQL Server LocalDB)]
-    Identity[ASP.NET Core Identity]
-    Migrations[EF Core Migrations]
-    Tests[xUnit Tests]
+    Tests[Testing Layer: xUnit Tests]
 
-    Browser --> Views
-    Views --> Controllers
-    Controllers -->|depend on abstractions| ServiceInterfaces
-    ServiceInterfaces --> Services
-    Services --> Repository
+    Browser --> Blazor
+    Browser --> IdentityPages
+    Blazor --> Services
+    IdentityPages --> Services
     Services --> Strategies
+    Services --> Repository
+    Services --> Domain
     Repository --> DbContext
+    DbContext --> Domain
     DbContext --> Database
-    DbContext --> Identity
-    Migrations --> Database
-
-    Tests -->|unit test service layer| Services
-    Tests -->|InMemory provider| DbContext
-
-    Controllers -. no direct DbContext usage .-> ServiceInterfaces
-    Identity --> Controllers
+    Tests --> Services
+    Tests --> Repository
+    Tests --> DbContext

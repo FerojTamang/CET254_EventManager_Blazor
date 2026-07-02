@@ -1,8 +1,8 @@
 %% Community Event Management System - Register for Event Sequence
 sequenceDiagram
     actor User
-    participant Browser as Browser/View
-    participant Controller as EventsController
+    participant Browser as Browser / Blazor UI
+    participant Component as EventDetails.razor
     participant UserManager
     participant ParticipantService
     participant RegistrationService
@@ -11,28 +11,29 @@ sequenceDiagram
     participant RegistrationRepository
     participant Database
 
-    User->>Browser: Click Register
-    Browser->>Controller: POST Register(eventId)
-    Controller->>UserManager: Get current Identity user
-    UserManager-->>Controller: IdentityUser
+    User->>Browser: Click Register for Event
+    Browser->>Component: Invoke RegisterForEventAsync()
+    Component->>Component: Get authentication state
+    Component->>UserManager: Get current Identity user
+    UserManager-->>Component: IdentityUser
 
-    Controller->>ParticipantService: GetParticipantByApplicationUserIdAsync(user.Id)
+    Component->>ParticipantService: GetParticipantByApplicationUserIdAsync(user.Id)
     ParticipantService->>ParticipantRepository: Query participant profile
     ParticipantRepository->>Database: SELECT Participant
     Database-->>ParticipantRepository: Participant or null
     ParticipantRepository-->>ParticipantService: Result
-    ParticipantService-->>Controller: Participant or null
+    ParticipantService-->>Component: Participant or null
 
     alt Participant profile does not exist
-        Controller->>ParticipantService: CreateParticipantAsync(participant)
+        Component->>ParticipantService: CreateParticipantAsync(participant)
         ParticipantService->>ParticipantRepository: AddAsync(participant)
         ParticipantRepository->>Database: INSERT Participant
         ParticipantService->>ParticipantRepository: SaveChangesAsync()
         ParticipantRepository->>Database: COMMIT
-        ParticipantService-->>Controller: Created participant
+        ParticipantService-->>Component: Created participant
     end
 
-    Controller->>RegistrationService: RegisterAsync(eventId, participantId)
+    Component->>RegistrationService: RegisterAsync(eventId, participantId)
     RegistrationService->>EventRepository: Check event exists
     EventRepository->>Database: SELECT Event
     Database-->>EventRepository: Event
@@ -59,16 +60,17 @@ sequenceDiagram
     RegistrationRepository->>Database: INSERT Registration
     RegistrationService->>RegistrationRepository: SaveChangesAsync()
     RegistrationRepository->>Database: COMMIT
-    RegistrationService-->>Controller: Registration
-    Controller-->>Browser: Redirect with success message
+    RegistrationService-->>Component: Registration
+    Component->>Component: Reload details and show success message
+    Component-->>Browser: Updated event details
 
     alt Duplicate registration
-        RegistrationService-->>Controller: DuplicateRegistrationException
-        Controller-->>Browser: Redirect with error message
+        RegistrationService-->>Component: DuplicateRegistrationException
+        Component-->>Browser: Show friendly error message
     else Past event
-        RegistrationService-->>Controller: PastEventRegistrationException
-        Controller-->>Browser: Redirect with error message
+        RegistrationService-->>Component: PastEventRegistrationException
+        Component-->>Browser: Show friendly error message
     else Venue full
-        RegistrationService-->>Controller: VenueCapacityExceededException
-        Controller-->>Browser: Redirect with error message
+        RegistrationService-->>Component: VenueCapacityExceededException
+        Component-->>Browser: Show friendly error message
     end

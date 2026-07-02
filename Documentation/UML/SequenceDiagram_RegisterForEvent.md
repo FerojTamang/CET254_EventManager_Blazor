@@ -2,12 +2,13 @@
 
 ## Purpose
 
-This document describes the user registration workflow implemented in the MVC application.
+This document describes the user registration workflow implemented in the Blazor-first application.
 
 ## Participants
 
-- Browser / Razor View
-- `EventsController`
+- User
+- Browser / Blazor component
+- `Components/Pages/EventDetails.razor`
 - `UserManager<IdentityUser>`
 - `ParticipantService`
 - `RegistrationService`
@@ -18,16 +19,16 @@ This document describes the user registration workflow implemented in the MVC ap
 
 ## Main Flow
 
-1. User opens an event details page.
-2. User clicks **Register**.
-3. Browser posts the registration form to `EventsController.Register`.
-4. `EventsController` uses `UserManager<IdentityUser>` to get the current logged-in Identity user.
-5. `EventsController` calls `ParticipantService.GetParticipantByApplicationUserIdAsync`.
+1. User opens `Components/Pages/EventDetails.razor` at `/events/{id:int}`.
+2. User clicks **Register for Event**.
+3. `EventDetails.razor` gets the current authentication state.
+4. `EventDetails.razor` uses `UserManager<IdentityUser>` to get the current logged-in Identity user.
+5. `EventDetails.razor` calls `ParticipantService.GetParticipantByApplicationUserIdAsync`.
 6. If no participant profile exists:
-   - Controller creates a `Participant` using the Identity user's email.
-   - Controller calls `ParticipantService.CreateParticipantAsync`.
-   - Participant is saved through `Repository<Participant>`.
-7. Controller calls `RegistrationService.RegisterAsync(eventId, participantId)`.
+   - The component creates a `Participant` using the Identity user's email.
+   - The component calls `ParticipantService.CreateParticipantAsync`.
+   - Participant data is saved through `Repository<Participant>`.
+7. The component calls `RegistrationService.RegisterAsync(eventId, participantId)`.
 8. `RegistrationService` checks that the event exists through `Repository<Event>`.
 9. `RegistrationService` checks that the participant exists through `Repository<Participant>`.
 10. `RegistrationService` checks that the event is not in the past.
@@ -35,7 +36,7 @@ This document describes the user registration workflow implemented in the MVC ap
 12. `RegistrationService` checks venue capacity.
 13. `RegistrationService` creates a new `Registration`.
 14. `Repository<Registration>` adds the registration and saves changes.
-15. Controller sets a success message and redirects to **My Registrations**.
+15. `EventDetails.razor` reloads event details and displays a success message.
 
 ## Alternate Flows
 
@@ -43,29 +44,28 @@ This document describes the user registration workflow implemented in the MVC ap
 
 - If an active registration already exists for the same event and participant:
   - `RegistrationService` throws `DuplicateRegistrationException`.
-  - Controller catches `AppException`.
-  - Controller stores a friendly error in `TempData["Error"]`.
-  - User is redirected back to event details.
+  - `EventDetails.razor` catches `AppException`.
+  - The component displays a friendly registration error message.
 
 ### Past Event
 
 - If the event date is before today:
   - `RegistrationService` throws `PastEventRegistrationException`.
-  - Controller shows a friendly error message.
+  - The component displays a friendly registration error message.
 
 ### Venue Full
 
 - If the event has venue assignments and confirmed registrations meet the smallest venue capacity:
   - `RegistrationService` throws `VenueCapacityExceededException`.
-  - Controller shows a friendly error message.
+  - The component displays a friendly registration error message.
 
 ## Mermaid Sequence Sketch
 
 ```mermaid
 sequenceDiagram
     actor User
-    participant Browser as Browser / Razor View
-    participant Controller as EventsController
+    participant Browser as Browser / Blazor UI
+    participant Component as EventDetails.razor
     participant UserManager as UserManager<IdentityUser>
     participant ParticipantService
     participant RegistrationService
@@ -74,56 +74,67 @@ sequenceDiagram
     participant RegistrationRepo as Repository<Registration>
     participant DB as Database
 
-    User->>Browser: Click Register
-    Browser->>Controller: POST Register(eventId)
-    Controller->>UserManager: Get current user
-    UserManager-->>Controller: IdentityUser
+    User->>Browser: Click Register for Event
+    Browser->>Component: Invoke RegisterForEventAsync()
+    Component->>Component: Get authentication state
+    Component->>UserManager: Get current Identity user
+    UserManager-->>Component: IdentityUser
 
-    Controller->>ParticipantService: GetParticipantByApplicationUserIdAsync(user.Id)
-    ParticipantService->>ParticipantRepo: Query participant
+    Component->>ParticipantService: GetParticipantByApplicationUserIdAsync(user.Id)
+    ParticipantService->>ParticipantRepo: Query participant profile
     ParticipantRepo->>DB: SELECT Participant
     DB-->>ParticipantRepo: Participant or null
     ParticipantRepo-->>ParticipantService: Result
-    ParticipantService-->>Controller: Participant or null
+    ParticipantService-->>Component: Participant or null
 
-    alt Participant does not exist
-        Controller->>ParticipantService: CreateParticipantAsync(participant)
-        ParticipantService->>ParticipantRepo: AddAsync + SaveChangesAsync
+    alt Participant profile does not exist
+        Component->>ParticipantService: CreateParticipantAsync(participant)
+        ParticipantService->>ParticipantRepo: AddAsync(participant)
         ParticipantRepo->>DB: INSERT Participant
-        DB-->>ParticipantRepo: Saved participant
+        ParticipantService->>ParticipantRepo: SaveChangesAsync()
+        ParticipantRepo->>DB: COMMIT
+        ParticipantService-->>Component: Created participant
     end
 
-    Controller->>RegistrationService: RegisterAsync(eventId, participantId)
-    RegistrationService->>EventRepo: GetByIdAsync(eventId)
+    Component->>RegistrationService: RegisterAsync(eventId, participantId)
+    RegistrationService->>EventRepo: Check event exists
     EventRepo->>DB: SELECT Event
     DB-->>EventRepo: Event
 
-    RegistrationService->>ParticipantRepo: ExistsAsync(participantId)
+    RegistrationService->>ParticipantRepo: Check participant exists
     ParticipantRepo->>DB: SELECT Participant exists
     DB-->>ParticipantRepo: Exists result
 
+    RegistrationService->>RegistrationService: Check event is not in the past
     RegistrationService->>RegistrationRepo: Check duplicate active registration
     RegistrationRepo->>DB: SELECT Registration
     DB-->>RegistrationRepo: Duplicate result
 
-    RegistrationService->>EventRepo: Load venues for capacity check
-    EventRepo->>DB: SELECT Event + EventVenues + Venues
-    DB-->>EventRepo: Event capacity data
+    RegistrationService->>EventRepo: Load EventVenues and Venue capacity
+    EventRepo->>DB: SELECT Event + Venues
+    DB-->>EventRepo: Capacity data
 
     RegistrationService->>RegistrationRepo: Count confirmed registrations
     RegistrationRepo->>DB: SELECT COUNT
-    DB-->>RegistrationRepo: Count
+    DB-->>RegistrationRepo: Confirmed count
 
-    RegistrationService->>RegistrationRepo: AddAsync(new Registration)
+    RegistrationService->>RegistrationService: Create Registration(Pending)
+    RegistrationService->>RegistrationRepo: AddAsync(registration)
     RegistrationRepo->>DB: INSERT Registration
-    RegistrationService->>RegistrationRepo: SaveChangesAsync
+    RegistrationService->>RegistrationRepo: SaveChangesAsync()
     RegistrationRepo->>DB: COMMIT
+    RegistrationService-->>Component: Registration
+    Component->>Component: Reload details and show success message
+    Component-->>Browser: Updated event details
 
-    RegistrationService-->>Controller: Registration
-    Controller-->>Browser: Redirect with success message
-
-    alt Duplicate registration / Past event / Venue full
-        RegistrationService-->>Controller: Throw AppException
-        Controller-->>Browser: Redirect with friendly error message
+    alt Duplicate registration
+        RegistrationService-->>Component: DuplicateRegistrationException
+        Component-->>Browser: Show friendly error message
+    else Past event
+        RegistrationService-->>Component: PastEventRegistrationException
+        Component-->>Browser: Show friendly error message
+    else Venue full
+        RegistrationService-->>Component: VenueCapacityExceededException
+        Component-->>Browser: Show friendly error message
     end
 ```

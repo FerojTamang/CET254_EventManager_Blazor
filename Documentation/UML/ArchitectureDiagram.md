@@ -2,65 +2,51 @@
 
 ## Purpose
 
-This document describes the layered architecture of the Community Event Management System.
+This document describes the layered architecture of the Community Event Management System as implemented in the final Blazor-first application.
 
 ## Layers
 
 ### 1. Browser
 
-- User interacts with Bootstrap-styled Razor pages.
-- Sends GET and POST requests to MVC controllers.
+- Users interact with Bootstrap-styled Blazor pages.
+- Main event-management workflows run through interactive Razor components.
 
-### 2. Razor Views
+### 2. Presentation Layer: Blazor Components
 
-- Views render forms, tables, cards, badges, validation messages, and alerts.
-- Views use ViewModels such as:
-  - `EventCreateViewModel`
-  - `EventEditViewModel`
-  - `EventDetailsViewModel`
-  - `EventFilterViewModel`
-  - `RegistrationViewModel`
-  - `AdminDashboardViewModel`
+- Blazor components render forms, tables, cards, badges, validation messages, and alerts.
+- Main user-facing components:
+  - `Components/Pages/Home.razor`
+  - `Components/Pages/Events.razor`
+  - `Components/Pages/EventDetails.razor`
+  - `Components/Pages/MyRegistrations.razor`
+- Main admin components:
+  - `Components/Pages/Admin/Dashboard.razor`
+  - `Components/Pages/Admin/Events.razor`
+  - `Components/Pages/Admin/Registrations.razor`
+  - `Components/Pages/Admin/Participants.razor`
+  - `Components/Pages/Admin/Venues.razor`
+  - `Components/Pages/Admin/Activities.razor`
+- Components use ViewModels such as `EventCreateViewModel`, `EventEditViewModel`, `EventFilterViewModel`, `ParticipantViewModel`, `VenueViewModel`, `ActivityViewModel`, and `AdminDashboardViewModel`.
 
-### 3. MVC Controllers
+### 3. Authentication Layer: ASP.NET Core Identity Razor Pages
 
-- Controllers handle HTTP flow only.
-- Controllers map between domain objects and ViewModels.
-- Controllers call service interfaces.
-- Controllers do not use `ApplicationDbContext` directly.
+- ASP.NET Core Identity Razor Pages are retained for authentication pages such as login, register, and logout.
+- Identity provides authentication, email confirmation support, and role-based authorization.
+- The application seeds `Admin` and `User` roles.
 
-Implemented controller examples:
+### 4. Business Logic Layer: Services
 
-- `AdminEventsController`
-- `AdminVenuesController`
-- `AdminActivitiesController`
-- `AdminParticipantsController`
-- `AdminRegistrationsController`
-- `EventsController`
-- `MyRegistrationsController`
-
-### 4. Service Interfaces
-
-- Service interfaces support abstraction, dependency injection, and unit testing.
+- Services contain business rules and validation.
 - Examples:
-  - `IEventService`
-  - `IRegistrationService`
-  - `IVenueService`
-  - `IActivityService`
-  - `IParticipantService`
-  - `IAdminDashboardService`
+  - `EventService`
+  - `RegistrationService`
+  - `VenueService`
+  - `ActivityService`
+  - `ParticipantService`
+  - `AdminDashboardService`
+- Blazor components depend on service interfaces instead of querying `ApplicationDbContext` directly.
 
-### 5. Service Implementations
-
-- Services contain business logic and validation.
-- Examples:
-  - Event creation and event assignment management
-  - Duplicate registration checking
-  - Venue capacity checking
-  - Registration confirmation/cancellation
-  - Dashboard summary generation
-
-### 6. Strategy Pattern
+### 5. Strategy Layer: Event Filtering
 
 - `IEventFilterStrategy` defines polymorphic event filtering.
 - Implementations:
@@ -70,66 +56,50 @@ Implemented controller examples:
   - `SearchTermFilterStrategy`
 - `EventService` applies each strategy to an `IQueryable<Event>`.
 
-### 7. Generic Repository
+### 6. Data Access Layer: Repository Pattern with EF Core DbContext
 
 - `IRepository<T>` abstracts common data access.
 - `Repository<T>` uses EF Core `DbSet<T>`.
-- Services depend on repositories rather than `ApplicationDbContext`.
+- `ApplicationDbContext` inherits from `IdentityDbContext`.
+- EF Core maps domain entities, relationships, indexes, and delete behavior.
 
-### 8. ApplicationDbContext
+### 7. Domain Layer: Models, Validation, and Custom Exceptions
 
-- Inherits from `IdentityDbContext`.
-- Preserves ASP.NET Core Identity.
-- Configures domain entities and relationships.
-- Configures many-to-many junction tables and indexes.
+- Domain models include `Event`, `Participant`, `Venue`, `Activity`, `Registration`, `EventVenue`, and `EventActivity`.
+- Validation is implemented with ViewModel data annotations, custom validation attributes, entity validation methods, service-level checks, and custom exceptions.
+- Custom exceptions provide safe user-facing error messages.
 
-### 9. SQL Server LocalDB
+### 8. Testing Layer: xUnit Tests
 
-- Stores application data through EF Core.
-- Uses migrations for database schema.
-
-## Supporting Concerns
-
-- **ASP.NET Core Identity**
-  - Handles login, registration, authentication, and roles.
-  - Roles include `Admin` and `User`.
-
-- **Bootstrap UI**
-  - Provides responsive cards, forms, tables, buttons, alerts, and badges.
-
-- **EF Core Migrations**
-  - Maintains database schema for Identity and domain models.
-
-- **xUnit Tests**
-  - Tests service-layer behavior.
-  - Uses EF Core InMemory database.
-  - Covers normal cases, edge cases, validation failures, and exception paths.
+- xUnit tests target the service layer.
+- Tests use EF Core InMemory databases.
+- Coverage focuses on filtering, registration rules, safe deletes, validation, and exception paths.
 
 ## Mermaid Architecture Sketch
 
 ```mermaid
 flowchart TD
     Browser[Browser]
-    Views[Razor Views + Bootstrap]
-    Controllers[MVC Controllers]
-    ServiceInterfaces[Service Interfaces]
-    Services[Service Implementations]
-    Strategies[Event Filter Strategies]
-    Repository[Generic Repository]
-    DbContext[ApplicationDbContext]
+    Blazor[Presentation Layer: Blazor Components]
+    IdentityPages[Authentication Layer: Identity Razor Pages]
+    Services[Business Logic Layer: Services]
+    Strategies[Strategy Layer: Event Filter Strategies]
+    Repository[Data Access Layer: Generic Repository]
+    DbContext[EF Core ApplicationDbContext]
+    Domain[Domain Layer: Models, Validation, Exceptions]
     Database[(SQL Server LocalDB)]
-    Identity[ASP.NET Core Identity]
-    Tests[xUnit Tests]
+    Tests[Testing Layer: xUnit Tests]
 
-    Browser --> Views
-    Views --> Controllers
-    Controllers --> ServiceInterfaces
-    ServiceInterfaces --> Services
-    Services --> Repository
+    Browser --> Blazor
+    Browser --> IdentityPages
+    Blazor --> Services
+    IdentityPages --> Services
     Services --> Strategies
+    Services --> Repository
+    Services --> Domain
     Repository --> DbContext
+    DbContext --> Domain
     DbContext --> Database
-    DbContext --> Identity
     Tests --> Services
     Tests --> Repository
     Tests --> DbContext
@@ -137,8 +107,10 @@ flowchart TD
 
 ## Architectural Rule
 
-Controllers do not use `ApplicationDbContext` directly. Data access flows through:
+Blazor components do not use `ApplicationDbContext` directly. Data access flows through:
 
 ```text
-Controller -> Service Interface -> Service Implementation -> IRepository<T> -> Repository<T> -> ApplicationDbContext -> SQL Server LocalDB
+Blazor Component -> Service Interface -> Service Implementation -> IRepository<T> -> Repository<T> -> ApplicationDbContext -> SQL Server LocalDB
 ```
+
+ASP.NET Core Identity Razor Pages are retained for authentication pages such as login, register, and logout. The main event management workflows are implemented using Blazor components.
