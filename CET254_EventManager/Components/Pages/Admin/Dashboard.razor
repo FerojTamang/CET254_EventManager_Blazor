@@ -9,6 +9,7 @@
 
 <div class="admin-app-shell">
     <AdminSidebar />
+
     <main class="admin-app-main">
         @if (_isLoading)
         {
@@ -41,9 +42,15 @@
                     <span class="admin-section-kicker">Admin</span>
                     <h1>Dashboard</h1>
                 </div>
-                <input class="admin-search-box" placeholder="Search events, participants, venues..." aria-label="Search admin records" />
+
+                <input class="admin-search-box"
+                       placeholder="Search events, participants, venues..."
+                       aria-label="Search admin records" />
+
                 <div class="admin-profile-box">
-                    <span>A</span>
+                    <span class="admin-profile-avatar">
+                        @SvgIcon("user")
+                    </span>
                     <div>
                         <strong>Administrator</strong>
                         <small>Admin area</small>
@@ -54,43 +61,82 @@
             <div class="admin-dashboard-content">
                 <section class="admin-dashboard-hero">
                     <div class="admin-hero-copy">
-                        <span class="admin-hero-badge">Administrator Area</span>
                         <h2>Welcome back, Administrator!</h2>
-                        <p>Control centre for managing community events, participants, venues, activities and registrations.</p>
+                        <p>
+                            Control centre for managing community events, participants, venues,
+                            activities and registrations.
+                        </p>
+
                         <div class="admin-hero-actions">
-                            <a class="btn btn-light" href="/admin/events">Create New Event</a>
-                            <a class="btn btn-outline-light" href="/events">View All Events</a>
+                            <a class="btn btn-light" href="/admin/events">
+                                <span class="btn-symbol">@SvgIcon("event")</span>
+                                Create New Event
+                            </a>
+
+                            <a class="btn btn-outline-light" href="/events">
+                                <span class="btn-symbol">@SvgIcon("users")</span>
+                                View All Events
+                            </a>
                         </div>
                     </div>
 
                     <div class="admin-hero-visual" aria-hidden="true">
-                        <div class="admin-schedule-card">
-                            <div class="admin-schedule-top">
-                                <span>Schedule</span>
-                                <strong>@DateTime.Today.ToString("MMM yyyy")</strong>
+                        <div class="admin-schedule-card admin-schedule-card-wide">
+                            <div class="admin-schedule-calendar">
+                                <div class="admin-schedule-top">
+                                    <button type="button" class="admin-calendar-arrow" tabindex="-1">‹</button>
+                                    <strong>@DateTime.Today.ToString("MMM yyyy")</strong>
+                                    <button type="button" class="admin-calendar-arrow" tabindex="-1">›</button>
+                                </div>
+
+                                <div class="admin-schedule-weekdays">
+                                    @foreach (var dayLabel in WeekdayLabels)
+                                    {
+                                        <span>@dayLabel</span>
+                                    }
+                                </div>
+
+                                <div class="admin-schedule-grid">
+                                    @foreach (var day in CalendarDays)
+                                    {
+                                        <span class="@(day == DateTime.Today.Day ? "is-active" : null)">@day</span>
+                                    }
+                                </div>
                             </div>
-                            <div class="admin-schedule-grid">
-                                <span></span>
-                                <span></span>
-                                <span class="is-active"></span>
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                            <div class="admin-schedule-total">
-                                <strong>@TotalRegistrations</strong>
-                                <span>registrations</span>
+
+                            <div class="admin-schedule-list">
+                                <h3>Dashboard Summary</h3>
+
+                                <div class="admin-schedule-item">
+                                    <span class="schedule-dot schedule-dot-blue"></span>
+                                    <strong>@_dashboard.TotalEvents events</strong>
+                                    <small>Programme</small>
+                                </div>
+
+                                <div class="admin-schedule-item">
+                                    <span class="schedule-dot schedule-dot-green"></span>
+                                    <strong>@_dashboard.PendingRegistrations pending</strong>
+                                    <small>Awaiting review</small>
+                                </div>
+
+                                <div class="admin-schedule-item">
+                                    <span class="schedule-dot schedule-dot-orange"></span>
+                                    <strong>@TotalRegistrations registrations</strong>
+                                    <small>All statuses</small>
+                                </div>
+
+                                <a href="/admin/registrations">View full registration list →</a>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 <section class="admin-stat-grid" aria-label="Dashboard statistics">
-                    @StatCard("E", _dashboard.TotalEvents, "Total Events", "Events currently held in the programme.", "/admin/events", "Manage events", "accent-blue")
-                    @StatCard("P", _dashboard.TotalParticipants, "Participants", "Participant profiles available to manage.", "/admin/participants", "Manage participants", "accent-purple")
-                    @StatCard("V", _dashboard.TotalVenues, "Venues", "Venues available for event scheduling.", "/admin/venues", "Manage venues", "accent-green")
-                    @StatCard("A", _dashboard.TotalActivities, "Activities", "Activities assigned across community events.", "/admin/activities", "Manage activities", "accent-orange")
-                    @StatCard("R", TotalRegistrations, "Registrations", "All registration records across statuses.", "/admin/registrations", "View registrations", "accent-indigo")
+                    @StatCard("event", _dashboard.TotalEvents, "Total Events", "Events currently held in the programme.", "/admin/events", "Manage events", "accent-blue")
+                    @StatCard("users", _dashboard.TotalParticipants, "Participants", "Participant profiles available to manage.", "/admin/participants", "Manage participants", "accent-purple")
+                    @StatCard("venue", _dashboard.TotalVenues, "Venues", "Venues available for event scheduling.", "/admin/venues", "Manage venues", "accent-green")
+                    @StatCard("activity", _dashboard.TotalActivities, "Activities", "Activities assigned across community events.", "/admin/activities", "Manage activities", "accent-orange")
+                    @StatCard("registration", TotalRegistrations, "Registrations", "All registration records across statuses.", "/admin/registrations", "View registrations", "accent-indigo")
                 </section>
 
                 <section class="admin-dashboard-grid">
@@ -116,6 +162,7 @@
                                 @ProgressRow("Pending", _dashboard.PendingRegistrations, "status-pending")
                                 @ProgressRow("Confirmed", _dashboard.ConfirmedRegistrations, "status-confirmed")
                                 @ProgressRow("Cancelled", _dashboard.CancelledRegistrations, "status-cancelled")
+                                @ProgressRow("Total Registrations", TotalRegistrations, "status-total")
                             </div>
                         }
                     </article>
@@ -127,12 +174,53 @@
                                 <h2>Quick Actions</h2>
                             </div>
                         </div>
+
                         <div class="admin-action-grid">
-                            @ActionTile("E", "Manage Events", "Create, update, delete, and assign venues or activities.", "/admin/events")
-                            @ActionTile("P", "Manage Participants", "Review and maintain participant records.", "/admin/participants")
-                            @ActionTile("V", "Manage Venues", "Maintain locations and venue capacity.", "/admin/venues")
-                            @ActionTile("A", "Manage Activities", "Organize workshops, talks, games, and other activities.", "/admin/activities")
-                            @ActionTile("R", "Manage Registrations", "Confirm or cancel participant registrations.", "/admin/registrations")
+                            @ActionTile("event", "Manage Events", "Create, update, delete, and assign venues or activities.", "/admin/events")
+                            @ActionTile("users", "Manage Participants", "Review and maintain participant records.", "/admin/participants")
+                            @ActionTile("venue", "Manage Venues", "Maintain locations and venue capacity.", "/admin/venues")
+                            @ActionTile("activity", "Manage Activities", "Organize workshops, talks, games, and other activities.", "/admin/activities")
+                            @ActionTile("registration", "Manage Registrations", "Confirm or cancel participant registrations.", "/admin/registrations")
+                        </div>
+                    </article>
+
+                    <article class="admin-panel-card admin-upcoming-card">
+                        <div class="admin-panel-header">
+                            <div>
+                                <span class="admin-section-kicker">Programme</span>
+                                <h2>Upcoming Events</h2>
+                            </div>
+                            <a class="btn btn-sm btn-outline-primary" href="/events">View events</a>
+                        </div>
+
+                        <div class="admin-upcoming-list">
+                            <div class="admin-upcoming-item">
+                                <span class="admin-upcoming-date">
+                                    <strong>@DateTime.Today.ToString("MMM")</strong>
+                                    <small>@DateTime.Today.Day</small>
+                                </span>
+
+                                <div>
+                                    <strong>Live event programme</strong>
+                                    <small>Open the events page to view current upcoming events.</small>
+                                </div>
+
+                                <a href="/events">View</a>
+                            </div>
+
+                            <div class="admin-upcoming-item">
+                                <span class="admin-upcoming-date admin-upcoming-date-soft">
+                                    <strong>@DateTime.Today.AddDays(7).ToString("MMM")</strong>
+                                    <small>@DateTime.Today.AddDays(7).Day</small>
+                                </span>
+
+                                <div>
+                                    <strong>Admin event management</strong>
+                                    <small>Create, update, and assign venues or activities.</small>
+                                </div>
+
+                                <a href="/admin/events">Manage</a>
+                            </div>
                         </div>
                     </article>
                 </section>
@@ -143,7 +231,7 @@
                             <span class="admin-section-kicker">Latest activity</span>
                             <h2>Recent Registrations</h2>
                         </div>
-                        <a class="btn btn-sm btn-outline-primary" href="/admin/registrations">Open registrations</a>
+                        <a class="btn btn-sm btn-outline-primary" href="/admin/registrations">View all registrations</a>
                     </div>
 
                     @if (_dashboard.RecentRegistrations.Any())
@@ -155,22 +243,33 @@
                                 <span>Date / Time</span>
                                 <span>Status</span>
                             </div>
+
                             @foreach (var registration in _dashboard.RecentRegistrations)
                             {
                                 <article class="admin-registration-row">
-                                    <div>
-                                        <strong>@registration.ParticipantName</strong>
-                                        <small>Participant</small>
+                                    <div class="admin-registration-person">
+                                        <span class="admin-registration-avatar">
+                                            @SvgIcon("user")
+                                        </span>
+                                        <div>
+                                            <strong>@registration.ParticipantName</strong>
+                                            <small>Participant</small>
+                                        </div>
                                     </div>
+
                                     <div>
                                         <span>@registration.EventTitle</span>
                                         <small>Event</small>
                                     </div>
+
                                     <div>
                                         <span>@registration.RegistrationDate.ToString("dd MMM yyyy, h:mm tt")</span>
                                     </div>
+
                                     <div>
-                                        <span class="admin-status-badge @GetAdminStatusClass(registration.Status)">@registration.Status</span>
+                                        <span class="admin-status-badge @GetAdminStatusClass(registration.Status)">
+                                            @registration.Status
+                                        </span>
                                     </div>
                                 </article>
                             }
@@ -196,16 +295,25 @@
     private bool _isAdmin;
     private string? _errorMessage;
 
+    private static readonly string[] WeekdayLabels =
+    {
+        "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"
+    };
+
     private int TotalRegistrations =>
         (_dashboard?.PendingRegistrations ?? 0)
         + (_dashboard?.ConfirmedRegistrations ?? 0)
         + (_dashboard?.CancelledRegistrations ?? 0);
+
+    private static IEnumerable<int> CalendarDays =>
+        Enumerable.Range(1, DateTime.DaysInMonth(DateTime.Today.Year, DateTime.Today.Month));
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
             _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
             _isAdmin = authenticationState.User.IsInRole("Admin");
 
@@ -226,31 +334,57 @@
         }
     }
 
-    private RenderFragment StatCard(string icon, int value, string label, string description, string href, string linkText, string accentClass) => @<article class="admin-stat-card">
-        <span class="admin-stat-icon @accentClass">@icon</span>
-        <div class="admin-stat-copy">
-            <strong>@value</strong>
-            <span>@label</span>
+    private RenderFragment StatCard(
+        string iconName,
+        int value,
+        string label,
+        string description,
+        string href,
+        string linkText,
+        string accentClass) => @<article class="admin-stat-card">
+            <span class="admin-stat-icon @accentClass">@SvgIcon(iconName)</span>
+
+            <div class="admin-stat-copy">
+                <strong>@value</strong>
+                <span>@label</span>
+                <small>@description</small>
+            </div>
+
+            <a class="admin-stat-link" href="@href">@linkText</a>
+        </article>;
+
+    private RenderFragment ProgressRow(
+        string label,
+        int count,
+        string statusClass) => @<div class="admin-progress-row">
+            <div class="admin-progress-label">
+                <span class="admin-status-badge @statusClass">@label</span>
+                <strong>
+                    @count
+                    <small>@GetRegistrationPercentage(count)%</small>
+                </strong>
+            </div>
+
+            <div class="admin-progress-track"
+                 role="progressbar"
+                 aria-label="@($"{label} registrations")"
+                 aria-valuenow="@GetRegistrationPercentage(count)"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+                <span class="admin-progress-fill @statusClass"
+                      style="width: @GetRegistrationPercentage(count)%"></span>
+            </div>
+        </div>;
+
+    private RenderFragment ActionTile(
+        string iconName,
+        string title,
+        string description,
+        string href) => @<a class="admin-action-tile" href="@href">
+            <span>@SvgIcon(iconName)</span>
+            <strong>@title</strong>
             <small>@description</small>
-        </div>
-        <a class="admin-stat-link" href="@href">@linkText</a>
-    </article>;
-
-    private RenderFragment ProgressRow(string label, int count, string statusClass) => @<div class="admin-progress-row">
-        <div class="admin-progress-label">
-            <span class="admin-status-badge @statusClass">@label</span>
-            <strong>@count <small>@GetRegistrationPercentage(count)%</small></strong>
-        </div>
-        <div class="admin-progress-track" role="progressbar" aria-label="@($"{label} registrations")" aria-valuenow="@GetRegistrationPercentage(count)" aria-valuemin="0" aria-valuemax="100">
-            <span class="admin-progress-fill @statusClass" style="width: @GetRegistrationPercentage(count)%"></span>
-        </div>
-    </div>;
-
-    private static RenderFragment ActionTile(string icon, string title, string description, string href) => @<a class="admin-action-tile" href="@href">
-        <span>@icon</span>
-        <strong>@title</strong>
-        <small>@description</small>
-    </a>;
+        </a>;
 
     private string GetLoginUrl()
     {
@@ -260,7 +394,9 @@
 
     private int GetRegistrationPercentage(int count)
     {
-        return TotalRegistrations == 0 ? 0 : (int)Math.Round((double)count / TotalRegistrations * 100);
+        return TotalRegistrations == 0
+            ? 0
+            : (int)Math.Round((double)count / TotalRegistrations * 100);
     }
 
     private static string GetAdminStatusClass(RegistrationStatus status)
@@ -273,4 +409,39 @@
             _ => "status-cancelled"
         };
     }
+
+    private RenderFragment SvgIcon(string name) => name switch
+    {
+        "dashboard" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5H15v-6H9v6H3.5a.5.5 0 0 1-.5-.5v-9.7Z" />
+        </svg>,
+
+        "event" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 2v3M17 2v3M4 8h16M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 6h3v3H8v-3Zm5 0h3v3h-3v-3Z" />
+        </svg>,
+
+        "registration" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 3h8l1 2h2a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2l1-2Zm1 4h6M8 11h8M8 15h8M8 19h5" />
+        </svg>,
+
+        "users" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4 0-7 2-7 4.5V20h14v-2.5C16 15 13 13 9 13Zm8.5-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 2c-.8 0-1.5.1-2.2.4 1.6 1 2.7 2.4 2.7 4.1V20h4v-2.2c0-2.5-2-4.8-4.5-4.8Z" />
+        </svg>,
+
+        "user" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.4-8 5.3V22h16v-2.7C20 16.4 16.4 14 12 14Z" />
+        </svg>,
+
+        "venue" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Zm0-9a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />
+        </svg>,
+
+        "activity" => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M13 4a2 2 0 1 1 4 0 2 2 0 0 1-4 0ZM7 22l2.5-6.2L7 13.5l-2 3.2-2-1.2 3-5 4.2 2.4 1.5-4.2-2.7-.8.7-2.2 5.8 1.8-2.2 6.2 3.2 3.3 3.7-1.3.8 2.2-4.8 1.7-4.2-4.2L9.3 22H7Z" />
+        </svg>,
+
+        _ => @<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" />
+        </svg>
+    };
 }

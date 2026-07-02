@@ -2916,3 +2916,714 @@ a {
         padding: 1.35rem;
     }
 }
+
+/* Admin dashboard polish */
+.admin-app-shell .admin-sidebar-icon {
+    font-size: 1rem;
+    line-height: 1;
+    letter-spacing: 0;
+}
+
+.admin-dashboard-hero {
+    overflow: hidden;
+}
+
+.admin-hero-copy {
+    justify-content: center;
+}
+
+.admin-schedule-card {
+    gap: 0.8rem;
+    min-width: 18rem;
+}
+
+.admin-schedule-top {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.admin-schedule-weekdays,
+.admin-schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+}
+
+.admin-schedule-weekdays span {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.admin-schedule-grid span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: 2rem;
+    color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.admin-schedule-grid span.is-active {
+    color: #111827;
+    background: #ffffff;
+    box-shadow: 0 10px 22px rgba(17, 24, 39, 0.18);
+}
+
+.admin-schedule-total {
+    margin-top: 0.25rem;
+    padding: 0.85rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+}
+
+.admin-dashboard-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-panel-card {
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.07);
+}
+
+.admin-progress-fill.status-total {
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+}
+
+.admin-status-badge.status-total,
+.status-total {
+    color: #3730a3;
+    background: #e0e7ff;
+}
+
+.admin-action-grid {
+    gap: 0.9rem;
+}
+
+.admin-action-tile {
+    background: linear-gradient(180deg, #ffffff, #f9fafb);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.admin-action-tile > span {
+    font-size: 1.1rem;
+}
+
+.admin-empty-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    margin-top: 0.65rem;
+    padding: 0.55rem 0.85rem;
+    color: #ffffff;
+    text-decoration: none;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.admin-empty-link:hover,
+.admin-empty-link:focus {
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 1399.98px) {
+    .admin-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 991.98px) {
+    .admin-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-schedule-card {
+        min-width: min(100%, 18rem);
+    }
+}
+/* Final admin dashboard visual polish */
+.admin-app-shell {
+    gap: 1.35rem;
+    background: #f5f7fb;
+}
+
+.admin-sidebar {
+    border-radius: 0;
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 12px 0 30px rgba(15, 23, 42, 0.04);
+}
+
+.admin-app-shell .admin-sidebar {
+    border-radius: 0;
+}
+
+.admin-sidebar-brand {
+    padding: 1.35rem 1rem 1.5rem;
+    border-bottom: 0;
+}
+
+.admin-sidebar-logo {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.85rem;
+    font-size: 1rem;
+}
+
+.admin-sidebar-title {
+    font-size: 0.98rem;
+    font-weight: 900;
+}
+
+.admin-sidebar-subtitle {
+    font-size: 0.82rem;
+}
+
+.admin-sidebar-nav {
+    gap: 0.45rem;
+    padding: 0 0.35rem;
+}
+
+.admin-sidebar-link {
+    min-height: 3.25rem;
+    padding: 0.75rem 0.9rem;
+    color: #1e293b;
+    border-radius: 0.9rem;
+    font-weight: 850;
+}
+
+    .admin-sidebar-link.active {
+        color: #2563eb;
+        background: #eef2ff;
+        box-shadow: none;
+    }
+
+    .admin-sidebar-link:hover {
+        color: #2563eb;
+        background: #f3f4ff;
+        transform: none;
+    }
+
+.admin-sidebar-icon {
+    color: #475569;
+    background: transparent;
+    font-size: 1.25rem;
+}
+
+.admin-sidebar-link.active .admin-sidebar-icon {
+    color: #2563eb;
+    background: transparent;
+}
+
+.admin-sidebar-footer {
+    position: absolute;
+    left: 1.35rem;
+    right: 1.35rem;
+    bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding-top: 1.4rem;
+    color: #475569;
+    border-top: 1px solid #e5e7eb;
+    font-weight: 750;
+}
+
+.admin-sidebar-collapse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: #64748b;
+    background: #f1f5f9;
+    border-radius: 999px;
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.admin-topbar {
+    grid-template-columns: auto minmax(22rem, 38rem) auto;
+    min-height: 4.6rem;
+    margin-bottom: 1.1rem;
+    padding: 0.75rem 1.15rem;
+    border-radius: 0;
+    border-width: 0 0 1px;
+    box-shadow: none;
+}
+
+.admin-section-kicker {
+    display: none;
+}
+
+.admin-topbar h1 {
+    font-size: 1.55rem;
+    font-weight: 950;
+}
+
+.admin-profile-box {
+    background: #ffffff;
+}
+
+.admin-dashboard-content {
+    gap: 1.1rem;
+}
+
+.admin-dashboard-hero {
+    min-height: 15.2rem;
+    grid-template-columns: minmax(0, 1fr) minmax(27rem, 0.74fr);
+    padding: 2.05rem;
+    background: radial-gradient(circle at 55% 5%, rgba(255, 255, 255, 0.20), transparent 24rem), linear-gradient(135deg, #1d4ed8 0%, #4f46e5 54%, #7c3aed 100%);
+    border-radius: 0.95rem;
+}
+
+.admin-hero-copy h2 {
+    margin-top: 0;
+    font-size: clamp(2rem, 3.4vw, 2.65rem);
+}
+
+.admin-hero-copy p {
+    max-width: 38rem;
+}
+
+.btn-symbol {
+    display: inline-block;
+    margin-right: 0.45rem;
+}
+
+.admin-schedule-card-wide {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(12rem, 0.95fr);
+    gap: 1.2rem;
+    width: 100%;
+    max-width: 34rem;
+    padding: 1.05rem 1.15rem;
+    color: #ffffff;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.admin-schedule-calendar {
+    padding-right: 1.2rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.admin-schedule-top {
+    padding-bottom: 0.65rem;
+    border-bottom: 0;
+}
+
+    .admin-schedule-top strong {
+        color: #ffffff;
+        background: transparent;
+        font-size: 0.95rem;
+    }
+
+.admin-calendar-arrow {
+    color: #ffffff;
+    background: transparent;
+    border: 0;
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.admin-schedule-weekdays {
+    margin-bottom: 0.4rem;
+}
+
+.admin-schedule-grid span {
+    height: 1.55rem;
+    min-height: 1.55rem;
+    color: rgba(255, 255, 255, 0.92);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    font-size: 0.78rem;
+}
+
+    .admin-schedule-grid span.is-active {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.22);
+        box-shadow: none;
+    }
+
+.admin-schedule-list {
+    display: grid;
+    gap: 0.65rem;
+    align-content: start;
+}
+
+    .admin-schedule-list h3 {
+        margin: 0 0 0.45rem;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 900;
+    }
+
+.admin-schedule-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    align-items: center;
+    color: #ffffff;
+}
+
+    .admin-schedule-item strong {
+        font-size: 0.86rem;
+    }
+
+    .admin-schedule-item small {
+        color: rgba(255, 255, 255, 0.78);
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+.schedule-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+}
+
+.schedule-dot-blue {
+    background: #38bdf8;
+}
+
+.schedule-dot-green {
+    background: #22c55e;
+}
+
+.schedule-dot-orange {
+    background: #f59e0b;
+}
+
+.admin-schedule-list a {
+    margin-top: 0.7rem;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 850;
+}
+
+.admin-stat-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.admin-stat-card {
+    min-height: 6.7rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: none;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.15rem;
+    border-radius: 0.9rem;
+}
+
+.admin-stat-icon {
+    width: 3.2rem;
+    height: 3.2rem;
+    color: #2563eb;
+    background: #eef2ff;
+    border-radius: 1rem;
+}
+
+    .admin-stat-icon.accent-purple {
+        color: #16a34a;
+        background: #dcfce7;
+    }
+
+    .admin-stat-icon.accent-green {
+        color: #7c3aed;
+        background: #ede9fe;
+    }
+
+    .admin-stat-icon.accent-orange {
+        color: #ea580c;
+        background: #ffedd5;
+    }
+
+    .admin-stat-icon.accent-indigo {
+        color: #db2777;
+        background: #fce7f3;
+    }
+
+.admin-stat-copy strong {
+    font-size: 1.65rem;
+}
+
+.admin-stat-link {
+    display: none;
+}
+
+.admin-dashboard-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(18rem, 0.7fr);
+}
+
+.admin-panel-card {
+    border-radius: 0.9rem;
+}
+
+.admin-panel-header h2 {
+    font-size: 1.05rem;
+}
+
+.admin-overview-list {
+    gap: 0.65rem;
+}
+
+.admin-progress-row {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
+.admin-progress-label {
+    margin-bottom: 0.45rem;
+}
+
+.admin-status-badge {
+    min-width: 5.8rem;
+}
+
+.admin-progress-track {
+    height: 0.45rem;
+}
+
+.admin-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-action-tile {
+    min-height: 3.85rem;
+    padding: 0.85rem 1rem;
+    background: #ffffff;
+    border-radius: 0.75rem;
+}
+
+    .admin-action-tile > span {
+        width: 2.5rem;
+        height: 2.5rem;
+        color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .admin-action-tile small {
+        display: none;
+    }
+
+.admin-upcoming-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.admin-upcoming-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.85rem;
+}
+
+.admin-upcoming-date {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    color: #2563eb;
+    background: #eff6ff;
+    border-radius: 0.8rem;
+    line-height: 1;
+}
+
+    .admin-upcoming-date strong {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+    }
+
+    .admin-upcoming-date small {
+        margin-top: 0.2rem;
+        font-size: 1.1rem;
+        font-weight: 950;
+    }
+
+.admin-upcoming-date-soft {
+    color: #7c3aed;
+    background: #f3e8ff;
+}
+
+.admin-upcoming-item strong,
+.admin-upcoming-item small {
+    display: block;
+}
+
+.admin-upcoming-item small {
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+.admin-upcoming-item a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 850;
+}
+
+.admin-recent-table {
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.85rem;
+}
+
+.admin-registration-row {
+    border: 0;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 0;
+    background: #ffffff;
+}
+
+    .admin-registration-row:last-child {
+        border-bottom: 0;
+    }
+
+.admin-registration-heading {
+    background: #f8fafc;
+}
+
+@media (max-width: 1399.98px) {
+    .admin-stat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .admin-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-upcoming-card {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .admin-dashboard-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-schedule-card-wide {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .admin-stat-grid,
+    .admin-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-schedule-card-wide {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-schedule-calendar {
+        padding-right: 0;
+        border-right: 0;
+    }
+}
+.admin-sidebar-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: currentColor;
+    display: block;
+}
+
+.admin-sidebar-link .admin-sidebar-icon {
+    color: #475569;
+}
+
+.admin-sidebar-link.active .admin-sidebar-icon {
+    color: #2563eb;
+}
+
+.admin-sidebar-link:hover .admin-sidebar-icon {
+    color: #2563eb;
+}
+/* SVG icon polish for admin dashboard */
+.admin-stat-icon svg,
+.admin-action-tile > span svg,
+.admin-profile-avatar svg,
+.admin-registration-avatar svg,
+.btn-symbol svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: currentColor;
+    display: block;
+}
+
+.btn-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.45rem;
+    vertical-align: middle;
+}
+
+.admin-profile-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border-radius: 0.85rem;
+}
+
+.admin-registration-person {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.admin-registration-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+    color: #2563eb;
+    background: #eff6ff;
+    border-radius: 0.8rem;
+}
+
+.admin-registration-person strong,
+.admin-registration-person small {
+    display: block;
+}
+
+.admin-stat-icon {
+    color: #2563eb;
+}
+
+.admin-action-tile > span {
+    color: #2563eb;
+}
